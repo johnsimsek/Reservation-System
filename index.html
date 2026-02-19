@@ -1,0 +1,1874 @@
+<!-- /index.html  (Inky Vibes Tattoo - Reservation System)
+  - Local logo file: 01.jpg (same folder as index.html)
+  - Login gate (password: 9197). If correct -> app, else stays on login.
+  - Customer autocomplete: datalist (mobile) + clickable list (desktop)
+  - Clicking logo/title navigates to Upcoming Bookings
+  - Hamburger menu
+  - Upcoming Bookings (future only, nearest first)
+  - Bookings -> Design/Tattoo (past+future, newest first)
+  - Customers + Edit modal
+  - New/Edit booking form
+  - Add new customer inside booking form (creates on save)
+  - Images: Local IndexedDB OR optional Google Drive
+  - Delete confirmation modal
+  - Phone input: +358 prefix enforced, no double prefix
+-->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Inky Vibes Tattoo - Reservation System</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#0b1220;
+      --muted:#5a677a;
+      --border:rgba(16, 24, 40, .12);
+      --accent:#2563eb;
+      --danger:#dc2626;
+      --ok:#16a34a;
+      --warn:#f59e0b;
+      --shadow:0 10px 26px rgba(16,24,40,.08);
+      --r:14px;
+      --gap:14px;
+
+      --type-tattoo:#f59e0b;
+      --type-design:#2563eb;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background:var(--bg);
+      color:var(--text);
+    }
+    a{ color:inherit; text-decoration:none; }
+    button,input,select,textarea{ font:inherit; }
+
+    /* LOGIN */
+    .loginWrap{
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      padding:18px;
+    }
+    .loginCard{
+      width:min(520px, 100%);
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .loginTop{
+      padding:22px 20px 10px 20px;
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
+    .logoCircle{
+      width:58px;
+      height:58px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      overflow:hidden;
+      background:#fff;
+      flex:0 0 auto;
+      box-shadow: 0 6px 16px rgba(16,24,40,.08);
+    }
+    .logoCircle img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .brandTitle{
+      font-size:20px;
+      font-weight:800;
+      line-height:1.15;
+      margin:0;
+    }
+    .brandSub{
+      margin:4px 0 0 0;
+      color:var(--muted);
+      font-size:14px;
+    }
+    .loginBody{
+      padding:12px 20px 22px 20px;
+      display:grid;
+      gap:12px;
+    }
+    .input{
+      width:100%;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:14px 14px;
+      outline:none;
+      background:#fff;
+    }
+    .input:focus{ border-color: rgba(37, 99, 235, .45); box-shadow:0 0 0 4px rgba(37,99,235,.12); }
+    .btn{
+      border:1px solid var(--border);
+      background:#fff;
+      border-radius:14px;
+      padding:12px 14px;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .btnPrimary{
+      background:var(--accent);
+      color:#fff;
+      border-color:transparent;
+    }
+    .btnDanger{
+      background:var(--danger);
+      color:#fff;
+      border-color:transparent;
+    }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:var(--gap);
+    }
+    @media (max-width:720px){
+      .row{ grid-template-columns: 1fr; }
+    }
+
+    /* APP SHELL */
+    .app{ display:none; }
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:50;
+      background:rgba(246,247,251,.88);
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--border);
+    }
+    .topbarInner{
+      max-width:1100px;
+      margin:0 auto;
+      padding:14px 14px;
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
+    .hamburger{
+      width:52px;height:52px;
+      border-radius:18px;
+      border:1px solid var(--border);
+      background:#fff;
+      display:grid;
+      place-items:center;
+      box-shadow: 0 8px 20px rgba(16,24,40,.06);
+      cursor:pointer;
+    }
+    .hamburger span{
+      font-size:22px;
+      line-height:1;
+      color:var(--accent);
+    }
+    .brandLink{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width: 0;
+      cursor:pointer;
+    }
+    .brandText{
+      min-width:0;
+    }
+    .brandText .t{
+      font-weight:900;
+      font-size:18px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: min(560px, 72vw);
+    }
+    .brandText .s{
+      color:var(--muted);
+      font-size:13px;
+      margin-top:2px;
+    }
+
+    /* SIDEMENU */
+    .menuOverlay{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(3,7,18,.32);
+      z-index:100;
+    }
+    .menu{
+      position:absolute;
+      top:0; left:0;
+      width:min(320px, 84vw);
+      height:100%;
+      background:#fff;
+      border-right:1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .menu a{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:#fff;
+      font-weight:800;
+    }
+    .menu a.active{ outline: 3px solid rgba(37,99,235,.15); border-color: rgba(37,99,235,.35); }
+    .chip{
+      width:34px;height:34px;
+      border-radius:12px;
+      background:rgba(37,99,235,.10);
+      display:grid;
+      place-items:center;
+      font-weight:900;
+      color:var(--accent);
+      border:1px solid rgba(37,99,235,.25);
+      flex:0 0 auto;
+    }
+
+    /* PAGE LAYOUT */
+    .container{
+      max-width:1100px;
+      margin:0 auto;
+      padding:16px 14px 44px 14px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .cardHead{
+      padding:16px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .cardTitle{
+      margin:0;
+      font-size:20px;
+      font-weight:900;
+      line-height:1.15;
+    }
+    .cardSub{
+      margin:6px 0 0 0;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .cardBody{ padding:16px; }
+
+    .inlineRow{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    /* TABLE-LIKE LIST */
+    .list{
+      border:1px solid var(--border);
+      border-radius:18px;
+      overflow:hidden;
+      background:#fff;
+    }
+    .listHeader, .listRow{
+      display:grid;
+      grid-template-columns: 140px 1fr 160px 180px;
+      gap:12px;
+      align-items:center;
+      padding:12px 14px;
+    }
+    .listHeader{
+      background:rgba(16,24,40,.03);
+      font-weight:900;
+      color:rgba(16,24,40,.7);
+      font-size:12px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .listRow{ border-top:1px solid var(--border); }
+    .listRow .muted{ color:var(--muted); font-size:13px; }
+    @media (max-width:900px){
+      .listHeader{ display:none; }
+      .listRow{
+        grid-template-columns: 1fr;
+        gap:8px;
+      }
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      font-weight:900;
+      font-size:12px;
+      width:fit-content;
+    }
+    .badge.tattoo{
+      background: rgba(245,158,11,.15);
+      border-color: rgba(245,158,11,.35);
+      color:#b45309;
+    }
+    .badge.design{
+      background: rgba(37,99,235,.12);
+      border-color: rgba(37,99,235,.28);
+      color:#1d4ed8;
+    }
+
+    /* ACTION ICONS */
+    .actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .iconBtn{
+      width:46px;height:46px;
+      border-radius:16px;
+      border:1px solid var(--border);
+      background:#fff;
+      cursor:pointer;
+      display:grid;
+      place-items:center;
+      box-shadow: 0 10px 18px rgba(16,24,40,.06);
+    }
+    .iconBtn:active{ transform: translateY(1px); }
+    .iconBtn span{ font-size:18px; }
+    .iconBtn.danger{ border-color: rgba(220,38,38,.35); }
+    .iconBtn.danger span{ color: var(--danger); }
+    .iconBtn.primary{ border-color: rgba(37,99,235,.35); }
+    .iconBtn.primary span{ color: var(--accent); }
+
+    /* FORMS */
+    .field{ display:grid; gap:8px; }
+    label{
+      font-size:13px;
+      font-weight:800;
+      color:rgba(16,24,40,.72);
+    }
+    .help{ color:var(--muted); font-size:12px; }
+    .req{ color:var(--danger); font-weight:900; margin-left:4px; }
+    textarea.input{ min-height: 96px; resize: vertical; }
+
+    /* Autocomplete */
+    .suggestWrap{ position:relative; }
+    .suggest{
+      position:absolute;
+      left:0; right:0;
+      top:calc(100% + 6px);
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:14px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      z-index:999;
+      max-height:280px;
+      overflow:auto;
+    }
+    .suggestItem{
+      padding:12px 14px;
+      border-top:1px solid var(--border);
+      cursor:pointer;
+    }
+    .suggestItem:first-child{ border-top:none; }
+    .suggestItem strong{ display:block; }
+    .suggestItem small{ color:var(--muted); }
+    .suggestItem:hover{ background: rgba(37,99,235,.06); }
+
+    /* MODALS */
+    .modalOverlay{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(3,7,18,.38);
+      z-index:200;
+      padding:18px;
+      overflow:auto;
+    }
+    .modal{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow: var(--shadow);
+      width:min(760px, 100%);
+      margin: 40px auto;
+      overflow:hidden;
+    }
+    .modalHead{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .modalHead h3{ margin:0; font-size:18px; font-weight:900; }
+    .modalBody{ padding:16px; }
+    .modalFoot{
+      padding:14px 16px;
+      border-top:1px solid var(--border);
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    /* Toast */
+    .toast{
+      position:fixed;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:22px;
+      background:#0b1220;
+      color:#fff;
+      padding:12px 14px;
+      border-radius:14px;
+      box-shadow: var(--shadow);
+      display:none;
+      z-index:9999;
+      max-width:min(520px, 90vw);
+    }
+
+    /* Images modal */
+    .imgGrid{
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap:12px;
+    }
+    .imgGrid img{
+      width:100%;
+      height:96px;
+      object-fit:cover;
+      border-radius:14px;
+      border:1px solid var(--border);
+      cursor:pointer;
+      background:#fff;
+    }
+    .viewer{
+      margin-top:14px;
+      border:1px solid var(--border);
+      border-radius:18px;
+      overflow:hidden;
+      background:#fff;
+    }
+    .viewer img{
+      width:100%;
+      height:auto;
+      display:block;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- LOGIN -->
+  <div class="loginWrap" id="loginWrap">
+    <div class="loginCard">
+      <div class="loginTop">
+        <div class="logoCircle"><img id="loginLogo" alt="logo" /></div>
+        <div>
+          <p class="brandTitle">Inky Vibes Tattoo</p>
+          <p class="brandSub">Reservation System</p>
+        </div>
+      </div>
+      <div class="loginBody">
+        <div class="field">
+          <label for="pw">Password <span class="req">*</span></label>
+          <input id="pw" class="input" type="password" placeholder="Enter password..." />
+        </div>
+        <button class="btn btnPrimary" id="loginBtn" type="button">Log In</button>
+        <div class="help" id="loginHelp" style="display:none;color:var(--danger);font-weight:800;">Wrong password.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div class="app" id="app">
+    <div class="topbar">
+      <div class="topbarInner">
+        <button class="hamburger" id="hamburgerBtn" aria-label="Menu"><span>≡</span></button>
+        <div class="brandLink" id="brandHome">
+          <div class="logoCircle" style="width:44px;height:44px;"><img id="topLogo" alt="logo" /></div>
+          <div class="brandText">
+            <div class="t">Inky Vibes Tattoo - Reservation System</div>
+            <div class="s">Bookings & customers management</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="menuOverlay" id="menuOverlay" aria-hidden="true">
+      <nav class="menu" aria-label="Navigation">
+        <a href="#/upcoming" data-route="upcoming"><span class="chip">U</span> Upcoming Bookings</a>
+        <a href="#/bookings" data-route="bookings"><span class="chip">B</span> Bookings</a>
+        <a href="#/customers" data-route="customers"><span class="chip">C</span> Customers</a>
+        <a href="#/new" data-route="new"><span class="chip">+</span> New Booking</a>
+      </nav>
+    </div>
+
+    <div class="container">
+      <!-- ROUTES -->
+      <div id="routeUpcoming" class="card" style="display:none;">
+        <div class="cardHead">
+          <div>
+            <h2 class="cardTitle">Upcoming Bookings</h2>
+            <p class="cardSub">Sorted by date (nearest first).</p>
+          </div>
+          <div class="inlineRow">
+            <a class="btn" href="#/new">+ New Booking</a>
+          </div>
+        </div>
+        <div class="cardBody">
+          <div class="row">
+            <div class="field">
+              <label for="searchUpcoming">Search</label>
+              <input id="searchUpcoming" class="input" placeholder="Search upcoming bookings..." />
+              <div class="help">Search: customer name/phone/email + notes.</div>
+            </div>
+            <div class="field">
+              <label for="typeUpcoming">Type</label>
+              <select id="typeUpcoming" class="input">
+                <option value="">All</option>
+                <option value="Tattoo">Tattoo</option>
+                <option value="Design">Design</option>
+              </select>
+              <div class="help">Filter by booking type.</div>
+            </div>
+          </div>
+
+          <div style="height:14px;"></div>
+          <div class="list" id="upcomingList">
+            <div class="listHeader">
+              <div>Type</div><div>Customer</div><div>Date</div><div style="text-align:right;">Actions</div>
+            </div>
+            <div id="upcomingRows"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="routeBookings" class="card" style="display:none;">
+        <div class="cardHead">
+          <div>
+            <h2 class="cardTitle">Bookings</h2>
+            <p class="cardSub">Choose Tattoo / Design. Sorted newest first.</p>
+          </div>
+          <div class="inlineRow">
+            <a class="btn" href="#/new">+ New Booking</a>
+          </div>
+        </div>
+        <div class="cardBody">
+          <div class="row">
+            <div class="field">
+              <label for="bookingsMode">Show</label>
+              <select id="bookingsMode" class="input">
+                <option value="Tattoo">Tattoo bookings</option>
+                <option value="Design">Design bookings</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="searchAll">Search</label>
+              <input id="searchAll" class="input" placeholder="Search bookings..." />
+            </div>
+          </div>
+
+          <div style="height:14px;"></div>
+          <div class="list">
+            <div class="listHeader">
+              <div>Type</div><div>Customer</div><div>Date</div><div style="text-align:right;">Actions</div>
+            </div>
+            <div id="allRows"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="routeCustomers" class="card" style="display:none;">
+        <div class="cardHead">
+          <div>
+            <h2 class="cardTitle">Customers</h2>
+            <p class="cardSub">Edit existing customers.</p>
+          </div>
+          <div class="inlineRow">
+            <button class="btn" id="newCustomerBtn" type="button">+ Add Customer</button>
+          </div>
+        </div>
+        <div class="cardBody">
+          <div class="row">
+            <div class="field">
+              <label for="searchCustomers">Search</label>
+              <input id="searchCustomers" class="input" placeholder="Search customers..." />
+              <div class="help">Search: name, phone, email.</div>
+            </div>
+            <div></div>
+          </div>
+
+          <div style="height:14px;"></div>
+          <div class="list">
+            <div class="listHeader">
+              <div>Name</div><div>Contact</div><div></div><div style="text-align:right;">Actions</div>
+            </div>
+            <div id="customerRows"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="routeNew" class="card" style="display:none;">
+        <div class="cardHead">
+          <div>
+            <h2 class="cardTitle" id="editTitle">New Booking</h2>
+            <p class="cardSub">Create a new booking or edit an existing one.</p>
+          </div>
+          <div class="inlineRow">
+            <a class="btn" href="#/upcoming">Back</a>
+          </div>
+        </div>
+
+        <div class="cardBody">
+          <form id="bookingForm">
+            <input type="hidden" id="bookingId" />
+
+            <div class="row">
+              <div class="field suggestWrap">
+                <label for="customerSearch">Select customer <span class="req">*</span></label>
+                <div class="inlineRow" style="justify-content:space-between;">
+                  <input id="customerSearch" class="input" placeholder="Type name/phone/email..." autocomplete="off" list="customerList" />
+                  <datalist id="customerList"></datalist>
+                  <button class="btn" id="addNewCustomerInline" type="button">+ Add New Customer</button>
+                </div>
+                <input type="hidden" id="customerId" />
+                <div id="customerSuggest" class="suggest" style="display:none;"></div>
+                <div class="help">Type to search. Pick existing or add new.</div>
+              </div>
+
+              <div class="field">
+                <label for="paymentMethod">Payment method <span class="req">*</span></label>
+                <select id="paymentMethod" class="input">
+                  <option>Cash</option>
+                  <option>Credit Card</option>
+                  <option>Klarna</option>
+                  <option>Mobile Payments</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="bookingType">Booking type <span class="req">*</span></label>
+                <select id="bookingType" class="input">
+                  <option>Design</option>
+                  <option>Tattoo</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="bookingDate">Booking date <span class="req">*</span></label>
+                <input id="bookingDate" class="input" type="datetime-local" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="status">Status <span class="req">*</span></label>
+                <select id="status" class="input">
+                  <option>Approved</option>
+                  <option>Pending</option>
+                  <option>Cancelled</option>
+                  <option>Done</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="currency">Currency</label>
+                <select id="currency" class="input">
+                  <option value="EUR">EUR</option>
+                  <option value="USD">USD</option>
+                  <option value="SEK">SEK</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="total">Total</label>
+                <input id="total" class="input" type="number" min="0" step="0.01" placeholder="0.00" />
+              </div>
+              <div class="field">
+                <label for="advance">Advance</label>
+                <input id="advance" class="input" type="number" min="0" step="0.01" placeholder="0.00" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label for="remaining">Remaining</label>
+                <input id="remaining" class="input" readonly />
+                <div class="help">Auto: total - advance</div>
+              </div>
+              <div class="field">
+                <label for="images">Add images</label>
+                <input id="images" class="input" type="file" multiple accept="image/*" />
+                <div class="help">You can add more images anytime.</div>
+                <div class="inlineRow" style="margin-top:8px;">
+                  <button class="btn" type="button" id="driveConnectBtn" title="Google Drive upload (optional)">Connect Drive</button>
+                  <div class="help" id="driveStatus" style="margin:0;">Drive: off</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="note">Note</label>
+              <textarea id="note" class="input" placeholder="Optional"></textarea>
+            </div>
+
+            <div class="inlineRow" style="justify-content:flex-end;">
+              <button class="btn" id="cancelBookingBtn" type="button">Cancel</button>
+              <button class="btn btnPrimary" id="saveBookingBtn" type="submit">Save Booking</button>
+            </div>
+          </form>
+
+          <div style="height:16px;"></div>
+          <div class="card" style="box-shadow:none;">
+            <div class="cardHead">
+              <div>
+                <h3 class="cardTitle" style="font-size:16px;">Existing images</h3>
+                <p class="cardSub">For this booking (edit mode).</p>
+              </div>
+              <div class="inlineRow">
+                <button class="btn btnDanger" id="removeAllImagesBtn" type="button">Remove all</button>
+              </div>
+            </div>
+            <div class="cardBody">
+              <div class="imgGrid" id="editImagesGrid"></div>
+              <div class="help" id="editImagesHelp" style="margin-top:10px;">No images yet.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUSTOMER MODAL -->
+    <div class="modalOverlay" id="customerModalOverlay" aria-hidden="true">
+      <div class="modal">
+        <div class="modalHead">
+          <h3 id="customerModalTitle">Add Customer</h3>
+          <button class="btn" id="closeCustomerModalBtn" type="button">Close</button>
+        </div>
+        <div class="modalBody">
+          <input type="hidden" id="custId" />
+          <div class="row">
+            <div class="field">
+              <label for="custName">Name <span class="req">*</span></label>
+              <input id="custName" class="input" placeholder="Full name" />
+            </div>
+            <div class="field">
+              <label for="custEmail">Email</label>
+              <input id="custEmail" class="input" placeholder="email@example.com" />
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="custPhone">Phone</label>
+              <input id="custPhone" class="input" placeholder="+358..." />
+              <div class="help">+358 is added automatically.</div>
+            </div>
+            <div class="field">
+              <label for="custNotes">Notes</label>
+              <input id="custNotes" class="input" placeholder="Optional" />
+            </div>
+          </div>
+          <div class="help" style="margin-top:10px;">Customer will be available in booking form.</div>
+        </div>
+        <div class="modalFoot">
+          <button class="btn btnPrimary" id="saveCustomerBtn" type="button">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIRM MODAL -->
+    <div class="modalOverlay" id="confirmOverlay" aria-hidden="true">
+      <div class="modal" style="width:min(560px,100%);">
+        <div class="modalHead">
+          <h3 id="confirmTitle">Confirm</h3>
+          <button class="btn" id="confirmCloseBtn" type="button">Close</button>
+        </div>
+        <div class="modalBody">
+          <div id="confirmText" style="color:var(--muted);"></div>
+        </div>
+        <div class="modalFoot">
+          <button class="btn" id="confirmNoBtn" type="button">Cancel</button>
+          <button class="btn btnDanger" id="confirmYesBtn" type="button">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- IMAGES MODAL -->
+    <div class="modalOverlay" id="imgModalOverlay" aria-hidden="true">
+      <div class="modal">
+        <div class="modalHead">
+          <h3>Images</h3>
+          <button class="btn" id="closeImgModalBtn" type="button">Close</button>
+        </div>
+        <div class="modalBody">
+          <div class="imgGrid" id="imgGallery"></div>
+          <div class="viewer" id="imgViewer" style="display:none;">
+            <img id="imgViewerImg" alt="full" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script>
+    // ===== LOGIN SETTINGS =====
+    const LOGIN_PASSWORD = "9197";
+    const AUTH_KEY = "inky_auth_ok_v1"; // sessionStorage
+
+    // Local logo file (same folder as index.html)
+    const LOGO_URL = "./01.jpg";
+
+    // localStorage keys (metadata only)
+    const LS = { customers: "inky_customers_v10", bookings: "inky_bookings_v10" };
+
+    // ===== GOOGLE DRIVE (optional, for long-term image storage) =====
+    // 1) Replace DRIVE_CLIENT_ID with your OAuth Client ID
+    // 2) Put your Drive Folder ID in DRIVE_FOLDER_ID (folder where images will be uploaded)
+    // 3) Set DRIVE_ENABLED = true
+    const DRIVE_ENABLED = false;
+    const DRIVE_CLIENT_ID = "PASTE_YOUR_CLIENT_ID.apps.googleusercontent.com";
+    const DRIVE_FOLDER_ID = "1FoGrnQiW6hkB-vyW2G4mSOB0T6uOBnp3";
+    const DRIVE_SCOPES = "https://www.googleapis.com/auth/drive.file";
+
+    // IndexedDB for image blobs
+    const IDB_NAME = "inky_images_db_v1";
+    const IDB_VERSION = 1;
+    const STORE_IMAGES = "images";
+
+    const $ = (s) => document.querySelector(s);
+
+    let currentRemovedImageIds = new Set();
+    let currentRemovedDriveIds = new Set();
+
+    function uid(prefix=""){ return prefix + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16); }
+    function parseJson(s, fallback){ try { return JSON.parse(s); } catch { return fallback; } }
+
+    function isAuthed(){ return sessionStorage.getItem(AUTH_KEY) === "1"; }
+    function setAuthed(v){ v ? sessionStorage.setItem(AUTH_KEY, "1") : sessionStorage.removeItem(AUTH_KEY); }
+
+    function toast(msg){
+      const el = $("#toast");
+      el.textContent = msg;
+      el.style.display = "block";
+      clearTimeout(window.__toastT);
+      window.__toastT = setTimeout(()=> el.style.display = "none", 2200);
+    }
+
+    function setLogoLocal(){
+      const imgs = [$("#loginLogo"), $("#topLogo")].filter(Boolean);
+      imgs.forEach(img => { img.src = LOGO_URL; });
+    }
+
+    // ===== LocalStorage helpers =====
+    function loadCustomers(){ return parseJson(localStorage.getItem(LS.customers), []); }
+    function loadBookings(){ return parseJson(localStorage.getItem(LS.bookings), []); }
+
+    function safeSetLocalStorage(key, value){
+      try { localStorage.setItem(key, value); return { ok:true }; }
+      catch (e) { return { ok:false, error:e }; }
+    }
+    function saveCustomers(customers){
+      return safeSetLocalStorage(LS.customers, JSON.stringify(customers));
+    }
+    function saveBookings(bookings){
+      return safeSetLocalStorage(LS.bookings, JSON.stringify(bookings));
+    }
+
+    // ===== IndexedDB helpers =====
+    let idb = null;
+    function openDb(){
+      return new Promise((resolve, reject)=>{
+        const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+        req.onupgradeneeded = (e)=>{
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_IMAGES)){
+            db.createObjectStore(STORE_IMAGES, { keyPath:"id" });
+          }
+        };
+        req.onsuccess = ()=>{ idb = req.result; resolve(); };
+        req.onerror = ()=> reject(req.error);
+      });
+    }
+    function idbTx(mode){
+      const tx = idb.transaction(STORE_IMAGES, mode);
+      return tx.objectStore(STORE_IMAGES);
+    }
+    function idbPutImage({ blob, name, mime }){
+      return new Promise((resolve, reject)=>{
+        const store = idbTx("readwrite");
+        const id = uid("img_");
+        const req = store.put({ id, blob, name, mime, createdAt: Date.now() });
+        req.onsuccess = ()=> resolve(id);
+        req.onerror = ()=> reject(req.error);
+      });
+    }
+    function idbGetImage(id){
+      return new Promise((resolve, reject)=>{
+        const store = idbTx("readonly");
+        const req = store.get(id);
+        req.onsuccess = ()=> resolve(req.result || null);
+        req.onerror = ()=> reject(req.error);
+      });
+    }
+    function idbDeleteImage(id){
+      return new Promise((resolve, reject)=>{
+        const store = idbTx("readwrite");
+        const req = store.delete(id);
+        req.onsuccess = ()=> resolve();
+        req.onerror = ()=> reject(req.error);
+      });
+    }
+
+    // ===== Google Drive helpers =====
+    let driveTokenClient = null;
+    let driveAccessToken = null;
+    let driveTokenExpiresAt = 0;
+
+    function driveReady(){
+      return DRIVE_ENABLED && DRIVE_CLIENT_ID && DRIVE_CLIENT_ID.includes(".apps.googleusercontent.com") && window.google?.accounts?.oauth2;
+    }
+
+    function driveInit(){
+      if (!driveReady() || driveTokenClient) return;
+      driveTokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: DRIVE_CLIENT_ID,
+        scope: DRIVE_SCOPES,
+        callback: (resp) => {
+          if (resp?.access_token){
+            driveAccessToken = resp.access_token;
+            driveTokenExpiresAt = Date.now() + ((resp.expires_in || 3500) * 1000);
+          }
+        },
+      });
+    }
+
+    async function ensureDriveToken(interactive){
+      if (!DRIVE_ENABLED) return null;
+      driveInit();
+      if (!driveTokenClient){
+        toast("Google Drive not ready. Check CLIENT_ID / enable Drive API.");
+        return null;
+      }
+      if (driveAccessToken && Date.now() < driveTokenExpiresAt - 60_000) return driveAccessToken;
+
+      return await new Promise((resolve) => {
+        driveTokenClient.callback = (resp) => {
+          if (resp?.access_token){
+            driveAccessToken = resp.access_token;
+            driveTokenExpiresAt = Date.now() + ((resp.expires_in || 3500) * 1000);
+            resolve(driveAccessToken);
+          } else {
+            resolve(null);
+          }
+        };
+        driveTokenClient.requestAccessToken({ prompt: interactive ? "consent" : "" });
+      });
+    }
+
+    async function driveUploadImage(file){
+      const token = await ensureDriveToken(true);
+      if (!token) throw new Error("No Drive token");
+
+      const metadata = {
+        name: file.name || `image_${Date.now()}.jpg`,
+        mimeType: file.type || "application/octet-stream",
+        parents: DRIVE_FOLDER_ID ? [DRIVE_FOLDER_ID] : undefined,
+      };
+
+      const boundary = "-------inky" + Math.random().toString(16).slice(2);
+      const delimiter = "\r\n--" + boundary + "\r\n";
+      const closeDelim = "\r\n--" + boundary + "--";
+
+      const metaPart = delimiter +
+        "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
+        JSON.stringify(metadata);
+
+      const filePart = delimiter +
+        `Content-Type: ${metadata.mimeType}\r\n\r\n`;
+
+      const ab = await file.arrayBuffer();
+      const body = new Blob([metaPart, filePart, new Uint8Array(ab), closeDelim], { type: "multipart/related; boundary=" + boundary });
+
+      const res = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType,webViewLink", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token },
+        body,
+      });
+
+      if (!res.ok){
+        const txt = await res.text().catch(()=> "");
+        throw new Error("Drive upload failed: " + res.status + " " + txt);
+      }
+
+      return await res.json();
+    }
+
+    async function driveDownloadBlob(fileId){
+      const token = await ensureDriveToken(false);
+      if (!token) return null;
+
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media`, {
+        headers: { Authorization: "Bearer " + token },
+      });
+      if (!res.ok) return null;
+      return await res.blob();
+    }
+
+    async function driveDeleteFile(fileId){
+      const token = await ensureDriveToken(false);
+      if (!token) return;
+
+      await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}`, {
+        method: "DELETE",
+        headers: { Authorization: "Bearer " + token },
+      }).catch(()=>{});
+    }
+
+    // ===== Customer helpers =====
+    function normalizePhone(p){
+      const s = (p || "").toString().trim();
+      if (!s) return "";
+      if (s.startsWith("+358")){
+        return "+358" + s.slice(4).replace(/\D/g, "");
+      }
+      if (s.startsWith("358")){
+        return "+358" + s.slice(3).replace(/\D/g, "");
+      }
+      const digits = s.replace(/\D/g, "");
+      if (!digits) return "";
+      if (digits.startsWith("0")){
+        return "+358" + digits.slice(1);
+      }
+      if (digits.startsWith("358")){
+        return "+358" + digits.slice(3);
+      }
+      return "+358" + digits;
+    }
+
+    function escapeHtml(s){
+      return (s || "").toString()
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;");
+    }
+    function escapeAttr(s){ return escapeHtml(s).replaceAll("'", "&#39;"); }
+
+    function formatCustomerLabel(c){
+      const parts = [];
+      if (c?.name) parts.push(c.name);
+      if (c?.phone) parts.push(c.phone);
+      if (c?.email) parts.push(c.email);
+      return parts.join(" — ");
+    }
+
+    function customerMatchesQuery(c, q){
+      const hay = `${c?.name||""} ${c?.phone||""} ${c?.email||""}`.toLowerCase();
+      return hay.includes(q);
+    }
+
+    function refreshCustomerIndex(){
+      const cs = loadCustomers();
+      const sorted = [...cs].sort((a,b)=>(a?.name||"").localeCompare(b?.name||""));
+      window.__customersSorted = sorted;
+    }
+
+    function closeCustomerSuggest(){ $("#customerSuggest").style.display = "none"; $("#customerSuggest").innerHTML = ""; }
+
+    function renderCustomerSuggest(matches){
+      const box = $("#customerSuggest");
+      if (!matches.length){ box.style.display = "none"; box.innerHTML = ""; return; }
+
+      box.innerHTML = matches.map(c => `
+        <div class="suggestItem" data-id="${escapeAttr(c.id)}">
+          <strong>${escapeHtml(c.name || "")}</strong>
+          <small>${escapeHtml([c.phone, c.email].filter(Boolean).join(" • "))}</small>
+        </div>
+      `).join("");
+
+      box.querySelectorAll(".suggestItem").forEach(el=>{
+        el.addEventListener("click", ()=>{
+          const id = el.getAttribute("data-id");
+          const customers = loadCustomers();
+          const c = customers.find(x=>x.id===id);
+          if (!c) return;
+          $("#customerId").value = c.id;
+          $("#customerSearch").value = formatCustomerLabel(c);
+          closeCustomerSuggest();
+        });
+      });
+
+      box.style.display = "block";
+    }
+
+    function updateCustomerSuggest(){
+      const raw = ($("#customerSearch")?.value || "");
+      const q = raw.trim().toLowerCase();
+
+      const customers = window.__customersSorted || [];
+      const matches = q
+        ? customers.filter(c => customerMatchesQuery(c, q)).slice(0, 20)
+        : customers.slice(0, 20);
+
+      const dl = $("#customerList");
+      if (dl){
+        dl.innerHTML = matches.map(c => `<option value="${escapeAttr(formatCustomerLabel(c))}"></option>`).join("");
+      }
+
+      renderCustomerSuggest(matches.slice(0, 10));
+    }
+
+    function resolveCustomerFromInput(){
+      const val = ($("#customerSearch")?.value || "").trim();
+      if (!val) return null;
+
+      const customers = loadCustomers();
+      const byHidden = $("#customerId").value;
+      if (byHidden){
+        const c = customers.find(x=>x.id===byHidden);
+        if (c) return c;
+      }
+
+      const norm = val.toLowerCase();
+      const match = customers.find(c => formatCustomerLabel(c).toLowerCase() === norm);
+      if (match) return match;
+
+      const q = norm;
+      const partial = customers.filter(c => customerMatchesQuery(c, q));
+      if (partial.length === 1) return partial[0];
+
+      return null;
+    }
+
+    // ===== Images =====
+    async function makeThumbnailDataUrl(file){
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.src = url;
+      await new Promise((res, rej)=>{ img.onload=res; img.onerror=rej; });
+      const max = 320;
+      const scale = Math.min(max/img.width, max/img.height, 1);
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0,0,w,h);
+      URL.revokeObjectURL(url);
+      return canvas.toDataURL("image/jpeg", 0.72);
+    }
+
+    async function readAndStoreImages(fileInput){
+      const files = Array.from(fileInput.files || []);
+      const images = files.filter(f => (f.type || "").startsWith("image/"));
+      if (!images.length) return [];
+
+      const out = [];
+      for (const f of images){
+        const thumb = await makeThumbnailDataUrl(f);
+
+        if (DRIVE_ENABLED){
+          const meta = await driveUploadImage(f);
+          out.push({ driveId: meta.id, name: meta.name || f.name, thumb, mime: f.type || meta.mimeType || "image/*" });
+        } else {
+          const id = await idbPutImage({ blob: f, name: f.name, mime: f.type || "image/*" });
+          out.push({ id, name: f.name, thumb, mime: f.type || "image/*" });
+        }
+      }
+
+      return out;
+    }
+
+    function openImgModal(images){
+      const overlay = $("#imgModalOverlay");
+      const gallery = $("#imgGallery");
+      const viewer = $("#imgViewer");
+      const viewerImg = $("#imgViewerImg");
+
+      gallery.innerHTML = "";
+      viewer.style.display = "none";
+      viewerImg.src = "";
+
+      const list = Array.isArray(images) ? images : [];
+      if (!list.length){
+        gallery.innerHTML = `<div style="color:var(--muted)">No images for this booking.</div>`;
+      } else {
+        list.forEach((img) => {
+          const el = document.createElement("img");
+          el.src = img.thumb || "";
+          el.alt = img.name || "image";
+          el.addEventListener("click", async ()=>{
+            try{
+              let blob = null;
+
+              if (img.driveId){
+                blob = await driveDownloadBlob(img.driveId);
+                if (!blob){ toast("Cannot load from Google Drive. Tap 'Connect Drive' then try again."); return; }
+              } else if (img.id){
+                const rec = await idbGetImage(img.id);
+                blob = rec?.blob || null;
+              }
+
+              if (!blob){ toast("Image not found in storage."); return; }
+
+              const url = URL.createObjectURL(blob);
+              viewerImg.src = url;
+              viewer.style.display = "block";
+              viewerImg.onload = () => URL.revokeObjectURL(url);
+            }catch{
+              toast("Cannot load image.");
+            }
+          });
+          gallery.appendChild(el);
+        });
+      }
+
+      overlay.style.display = "block";
+      overlay.setAttribute("aria-hidden", "false");
+    }
+
+    function closeImgModal(){
+      const overlay = $("#imgModalOverlay");
+      overlay.style.display = "none";
+      overlay.setAttribute("aria-hidden", "true");
+    }
+
+    // ===== Confirm modal =====
+    function openConfirm({ title, text, onYes }){
+      $("#confirmTitle").textContent = title || "Confirm";
+      $("#confirmText").textContent = text || "";
+      $("#confirmOverlay").style.display = "block";
+      $("#confirmOverlay").setAttribute("aria-hidden", "false");
+
+      const yes = $("#confirmYesBtn");
+      const no = $("#confirmNoBtn");
+      const close = $("#confirmCloseBtn");
+
+      const cleanup = ()=>{
+        $("#confirmOverlay").style.display = "none";
+        $("#confirmOverlay").setAttribute("aria-hidden", "true");
+        yes.onclick = null; no.onclick = null; close.onclick = null;
+      };
+
+      yes.onclick = async ()=>{ cleanup(); await onYes?.(); };
+      no.onclick = cleanup;
+      close.onclick = cleanup;
+    }
+
+    // ===== Routing =====
+    function showRoute(name){
+      ["Upcoming","Bookings","Customers","New"].forEach(r => $("#route"+r).style.display = "none");
+      if (name === "upcoming") $("#routeUpcoming").style.display = "block";
+      if (name === "bookings") $("#routeBookings").style.display = "block";
+      if (name === "customers") $("#routeCustomers").style.display = "block";
+      if (name === "new") $("#routeNew").style.display = "block";
+
+      document.querySelectorAll(".menu a").forEach(a=>{
+        a.classList.toggle("active", a.getAttribute("data-route") === name);
+      });
+    }
+
+    function route(){
+      if (!isAuthed()){
+        $("#app").style.display = "none";
+        $("#loginWrap").style.display = "grid";
+        return;
+      }
+      $("#loginWrap").style.display = "none";
+      $("#app").style.display = "block";
+
+      const h = (location.hash || "#/upcoming").replace("#/","");
+      const parts = h.split("/");
+      const r = parts[0] || "upcoming";
+      if (r === "edit"){ showRoute("new"); loadBookingIntoForm(parts[1]); return; }
+      if (r === "new"){ showRoute("new"); resetBookingForm(); return; }
+      if (r === "customers"){ showRoute("customers"); renderCustomers(); return; }
+      if (r === "bookings"){ showRoute("bookings"); renderAllBookings(); return; }
+      showRoute("upcoming");
+      renderUpcoming();
+    }
+
+    // ===== Render lists =====
+    function fmtDate(dt){
+      const d = new Date(dt);
+      if (Number.isNaN(d.getTime())) return "";
+      const pad = (n)=> String(n).padStart(2,"0");
+      return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function findCustomer(id){
+      const cs = loadCustomers();
+      return cs.find(c=>c.id===id) || null;
+    }
+
+    function badgeFor(type){
+      const cls = (type === "Tattoo") ? "tattoo" : "design";
+      return `<span class="badge ${cls}">${escapeHtml(type)}</span>`;
+    }
+
+    function renderRow(b){
+      const c = findCustomer(b.customerId) || {};
+      const label = escapeHtml(c.name || "Unknown");
+      const sub = escapeHtml([c.phone, c.email].filter(Boolean).join(" • "));
+      const date = fmtDate(b.date);
+      const imgCount = (b.images || []).length;
+
+      return `
+        <div class="listRow">
+          <div>${badgeFor(b.type)}</div>
+          <div>
+            <div style="font-weight:900;">${label}</div>
+            <div class="muted">${sub}</div>
+            ${b.note ? `<div class="muted" style="margin-top:4px;">${escapeHtml(b.note)}</div>` : ""}
+          </div>
+          <div style="font-weight:900;">${escapeHtml(date)}</div>
+          <div class="actions">
+            <button class="iconBtn primary" data-act="images" data-id="${escapeAttr(b.id)}" title="Images"><span>🖼️</span></button>
+            <button class="iconBtn primary" data-act="edit" data-id="${escapeAttr(b.id)}" title="Edit"><span>✏️</span></button>
+            <button class="iconBtn danger" data-act="del" data-id="${escapeAttr(b.id)}" title="Delete"><span>🗑️</span></button>
+            <div class="muted" style="font-size:12px;align-self:center;">${imgCount ? `${imgCount} img` : ""}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function bindRowActions(rootEl){
+      rootEl.querySelectorAll("button[data-act]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          const act = btn.getAttribute("data-act");
+          const id = btn.getAttribute("data-id");
+          const bookings = loadBookings();
+          const b = bookings.find(x=>x.id===id);
+          if (!b) return;
+
+          if (act === "images"){ openImgModal(b.images || []); return; }
+          if (act === "edit"){ location.hash = "#/edit/" + id; return; }
+          if (act === "del"){
+            openConfirm({
+              title: "Delete booking?",
+              text: "This booking will be permanently deleted (including images).",
+              onYes: async () => {
+                const bookings = loadBookings();
+                const bb = bookings.find(x=>x.id === id);
+                if (bb?.images?.length){
+                  for (const img of bb.images) {
+                    if (img?.id) await idbDeleteImage(img.id).catch(()=>{});
+                    if (img?.driveId) await driveDeleteFile(img.driveId);
+                  }
+                }
+                saveBookings(bookings.filter(x=>x.id !== id));
+                toast("Booking deleted.");
+                location.hash = "#/upcoming";
+              }
+            });
+          }
+        });
+      });
+    }
+
+    function renderUpcoming(){
+      refreshCustomerIndex();
+      const q = ($("#searchUpcoming").value || "").trim().toLowerCase();
+      const t = ($("#typeUpcoming").value || "").trim();
+      const now = Date.now();
+      let bs = loadBookings().filter(b => new Date(b.date).getTime() >= now);
+      if (t) bs = bs.filter(b=>b.type === t);
+      if (q){
+        bs = bs.filter(b=>{
+          const c = findCustomer(b.customerId) || {};
+          const hay = `${c.name||""} ${c.phone||""} ${c.email||""} ${b.note||""}`.toLowerCase();
+          return hay.includes(q);
+        });
+      }
+      bs.sort((a,b)=> new Date(a.date)-new Date(b.date));
+      const rows = bs.map(renderRow).join("") || `<div class="listRow"><div class="muted">No upcoming bookings.</div></div>`;
+      $("#upcomingRows").innerHTML = rows;
+      bindRowActions($("#upcomingRows"));
+    }
+
+    function renderAllBookings(){
+      refreshCustomerIndex();
+      const mode = $("#bookingsMode").value;
+      const q = ($("#searchAll").value || "").trim().toLowerCase();
+      let bs = loadBookings().filter(b => b.type === mode);
+      if (q){
+        bs = bs.filter(b=>{
+          const c = findCustomer(b.customerId) || {};
+          const hay = `${c.name||""} ${c.phone||""} ${c.email||""} ${b.note||""}`.toLowerCase();
+          return hay.includes(q);
+        });
+      }
+      bs.sort((a,b)=> new Date(b.date)-new Date(a.date)); // newest first
+      const rows = bs.map(renderRow).join("") || `<div class="listRow"><div class="muted">No bookings.</div></div>`;
+      $("#allRows").innerHTML = rows;
+      bindRowActions($("#allRows"));
+    }
+
+    function renderCustomers(){
+      refreshCustomerIndex();
+      const q = ($("#searchCustomers").value || "").trim().toLowerCase();
+      let cs = loadCustomers();
+      if (q){
+        cs = cs.filter(c => customerMatchesQuery(c, q));
+      }
+      cs.sort((a,b)=>(a?.name||"").localeCompare(b?.name||""));
+      const rows = cs.map(c=>{
+        return `
+          <div class="listRow">
+            <div style="font-weight:900;">${escapeHtml(c.name||"")}</div>
+            <div>
+              <div style="font-weight:800;">${escapeHtml(c.phone||"")}</div>
+              <div class="muted">${escapeHtml(c.email||"")}</div>
+            </div>
+            <div></div>
+            <div class="actions">
+              <button class="iconBtn primary" data-act="editCust" data-id="${escapeAttr(c.id)}" title="Edit"><span>✏️</span></button>
+              <button class="iconBtn danger" data-act="delCust" data-id="${escapeAttr(c.id)}" title="Delete"><span>🗑️</span></button>
+            </div>
+          </div>
+        `;
+      }).join("") || `<div class="listRow"><div class="muted">No customers.</div></div>`;
+      $("#customerRows").innerHTML = rows;
+
+      $("#customerRows").querySelectorAll("button[data-act]").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const act = btn.getAttribute("data-act");
+          const id = btn.getAttribute("data-id");
+          if (act === "editCust"){ openCustomerModal(id); return; }
+          if (act === "delCust"){
+            openConfirm({
+              title: "Delete customer?",
+              text: "Customer will be removed. Bookings will keep old reference (not recommended).",
+              onYes: async ()=>{
+                const cs = loadCustomers().filter(c=>c.id !== id);
+                saveCustomers(cs);
+                toast("Customer deleted.");
+                renderCustomers();
+                refreshCustomerIndex();
+              }
+            });
+          }
+        });
+      });
+    }
+
+    // ===== Booking form =====
+    function resetBookingForm(){
+      currentRemovedImageIds = new Set();
+      currentRemovedDriveIds = new Set();
+      $("#bookingForm").reset();
+      $("#bookingId").value = "";
+      $("#customerId").value = "";
+      $("#customerSearch").value = "";
+      $("#currency").value = "EUR";
+      $("#status").value = "Approved";
+      $("#paymentMethod").value = "Cash";
+      $("#bookingType").value = "Design";
+      $("#remaining").value = "0.00";
+      $("#images").value = "";
+      $("#editImagesGrid").innerHTML = "";
+      $("#editImagesHelp").style.display = "block";
+      $("#editTitle").textContent = "New Booking";
+    }
+
+    function loadBookingIntoForm(id){
+      resetBookingForm();
+      const bookings = loadBookings();
+      const b = bookings.find(x=>x.id===id);
+      if (!b){ toast("Booking not found."); location.hash="#/upcoming"; return; }
+
+      $("#bookingId").value = b.id;
+      $("#editTitle").textContent = "Edit Booking";
+      $("#paymentMethod").value = b.paymentMethod || "Cash";
+      $("#bookingType").value = b.type || "Design";
+      $("#bookingDate").value = (b.date || "").slice(0,16);
+      $("#status").value = b.status || "Approved";
+      $("#currency").value = b.currency || "EUR";
+      $("#total").value = b.total ?? "";
+      $("#advance").value = b.advance ?? "";
+      $("#note").value = b.note || "";
+
+      const c = findCustomer(b.customerId);
+      if (c){
+        $("#customerId").value = c.id;
+        $("#customerSearch").value = formatCustomerLabel(c);
+      }
+
+      updateRemaining();
+      renderEditImages(b.images || []);
+    }
+
+    function updateRemaining(){
+      const total = parseFloat($("#total").value || "0") || 0;
+      const adv = parseFloat($("#advance").value || "0") || 0;
+      const rem = Math.max(total - adv, 0);
+      $("#remaining").value = rem.toFixed(2);
+    }
+
+    function renderEditImages(imgs){
+      const grid = $("#editImagesGrid");
+      const help = $("#editImagesHelp");
+      grid.innerHTML = "";
+
+      if (!imgs.length){
+        help.style.display = "block";
+        help.textContent = "No images yet.";
+        return;
+      }
+      help.style.display = "none";
+
+      imgs.forEach((img, idx)=>{
+        const wrap = document.createElement("div");
+        wrap.style.position = "relative";
+
+        const el = document.createElement("img");
+        el.src = img.thumb || "";
+        el.alt = img.name || "image";
+        el.addEventListener("click", ()=> openImgModal(imgs));
+
+        const rm = document.createElement("button");
+        rm.type = "button";
+        rm.className = "btn btnDanger";
+        rm.textContent = "Remove";
+        rm.style.position = "absolute";
+        rm.style.right = "8px";
+        rm.style.bottom = "8px";
+        rm.style.padding = "8px 10px";
+        rm.style.borderRadius = "12px";
+        rm.addEventListener("click", ()=>{
+          if (img?.id) currentRemovedImageIds.add(img.id);
+          if (img?.driveId) currentRemovedDriveIds.add(img.driveId);
+          const bookings = loadBookings();
+          const bid = $("#bookingId").value;
+          const b = bookings.find(x=>x.id===bid);
+          if (!b) return;
+          b.images = (b.images || []).filter((x,i)=> i !== idx);
+          saveBookings(bookings);
+          renderEditImages(b.images || []);
+          toast("Image removed (save booking to finalize).");
+        });
+
+        wrap.appendChild(el);
+        wrap.appendChild(rm);
+        grid.appendChild(wrap);
+      });
+    }
+
+    // ===== Customer modal =====
+    function openCustomerModal(customerId){
+      const overlay = $("#customerModalOverlay");
+      overlay.style.display = "block";
+      overlay.setAttribute("aria-hidden","false");
+
+      if (customerId){
+        const cs = loadCustomers();
+        const c = cs.find(x=>x.id===customerId);
+        $("#customerModalTitle").textContent = "Edit Customer";
+        $("#custId").value = c?.id || "";
+        $("#custName").value = c?.name || "";
+        $("#custEmail").value = c?.email || "";
+        $("#custPhone").value = c?.phone || "+358";
+        $("#custNotes").value = c?.notes || "";
+      } else {
+        $("#customerModalTitle").textContent = "Add Customer";
+        $("#custId").value = "";
+        $("#custName").value = "";
+        $("#custEmail").value = "";
+        $("#custPhone").value = "+358";
+        $("#custNotes").value = "";
+      }
+    }
+
+    function closeCustomerModal(){
+      $("#customerModalOverlay").style.display = "none";
+      $("#customerModalOverlay").setAttribute("aria-hidden","true");
+    }
+
+    function saveCustomerFromModal(){
+      const id = ($("#custId").value || "").trim();
+      const name = ($("#custName").value || "").trim();
+      const email = ($("#custEmail").value || "").trim();
+      const phone = normalizePhone($("#custPhone").value || "");
+      const notes = ($("#custNotes").value || "").trim();
+
+      if (!name){ toast("Name is required."); return null; }
+
+      const customers = loadCustomers();
+      let c = null;
+      if (id){
+        c = customers.find(x=>x.id===id);
+        if (c){
+          c.name = name; c.email = email; c.phone = phone; c.notes = notes;
+        }
+      }
+      if (!c){
+        c = { id: uid("c_"), name, email, phone, notes, createdAt: Date.now() };
+        customers.push(c);
+      }
+
+      const r = saveCustomers(customers);
+      if (!r.ok){
+        toast("Cannot save customer (storage full?).");
+        return null;
+      }
+      refreshCustomerIndex();
+      return c;
+    }
+
+    // ===== Events =====
+    $("#hamburgerBtn").addEventListener("click", ()=>{
+      $("#menuOverlay").style.display = "block";
+      $("#menuOverlay").setAttribute("aria-hidden","false");
+    });
+    $("#menuOverlay").addEventListener("click", (e)=>{
+      if (e.target.id === "menuOverlay"){
+        $("#menuOverlay").style.display = "none";
+        $("#menuOverlay").setAttribute("aria-hidden","true");
+      }
+    });
+    document.querySelectorAll(".menu a").forEach(a=>{
+      a.addEventListener("click", ()=>{
+        $("#menuOverlay").style.display = "none";
+        $("#menuOverlay").setAttribute("aria-hidden","true");
+      });
+    });
+
+    $("#brandHome").addEventListener("click", ()=>{ location.hash = "#/upcoming"; });
+    $("#closeImgModalBtn").addEventListener("click", closeImgModal);
+    $("#imgModalOverlay").addEventListener("click", (e)=>{
+      if (e.target.id === "imgModalOverlay") closeImgModal();
+    });
+
+    $("#searchUpcoming").addEventListener("input", renderUpcoming);
+    $("#typeUpcoming").addEventListener("change", renderUpcoming);
+
+    $("#bookingsMode").addEventListener("change", renderAllBookings);
+    $("#searchAll").addEventListener("input", renderAllBookings);
+
+    $("#searchCustomers").addEventListener("input", renderCustomers);
+
+    $("#newCustomerBtn").addEventListener("click", ()=> openCustomerModal(null));
+    $("#closeCustomerModalBtn").addEventListener("click", closeCustomerModal);
+    $("#customerModalOverlay").addEventListener("click", (e)=>{
+      if (e.target.id === "customerModalOverlay") closeCustomerModal();
+    });
+    $("#saveCustomerBtn").addEventListener("click", ()=>{
+      const c = saveCustomerFromModal();
+      if (!c) return;
+      toast("Customer saved.");
+      closeCustomerModal();
+      renderCustomers();
+    });
+
+    $("#addNewCustomerInline").addEventListener("click", ()=>{
+      openCustomerModal(null);
+      setTimeout(()=> $("#custName").focus(), 50);
+    });
+
+    $("#customerSearch").addEventListener("input", ()=>{
+      $("#customerId").value = "";
+      updateCustomerSuggest();
+    });
+    $("#customerSearch").addEventListener("focus", updateCustomerSuggest);
+    document.addEventListener("click", (e)=>{
+      if (!e.target.closest(".suggestWrap")) closeCustomerSuggest();
+    });
+
+    $("#total").addEventListener("input", updateRemaining);
+    $("#advance").addEventListener("input", updateRemaining);
+
+    $("#removeAllImagesBtn").addEventListener("click", ()=>{
+      const bid = $("#bookingId").value;
+      if (!bid){ toast("No booking loaded."); return; }
+      openConfirm({
+        title: "Remove all images?",
+        text: "Images will be removed from this booking. Save booking to finalize.",
+        onYes: async ()=>{
+          const bookings = loadBookings();
+          const b = bookings.find(x=>x.id===bid);
+          if (!b) return;
+          const imgs = b.images || [];
+          imgs.forEach(img => { if (img?.id) currentRemovedImageIds.add(img.id); if (img?.driveId) currentRemovedDriveIds.add(img.driveId); });
+          b.images = [];
+          saveBookings(bookings);
+          renderEditImages([]);
+          toast("All images removed (save booking to finalize).");
+        }
+      });
+    });
+
+    $("#images").addEventListener("change", async ()=>{
+      if (!$("#bookingId").value){
+        toast("Images will be attached when you save the booking.");
+      }
+    });
+
+    // Google Drive connect
+    function updateDriveStatus(){
+      const el = $("#driveStatus");
+      if (!el) return;
+      el.textContent = DRIVE_ENABLED ? (driveAccessToken ? "Drive: connected" : "Drive: ready") : "Drive: off";
+    }
+
+    $("#driveConnectBtn")?.addEventListener("click", async ()=>{
+      if (!isAuthed()) return;
+      if (!DRIVE_ENABLED){
+        toast("Drive is disabled. Set DRIVE_ENABLED=true in index.html.");
+        return;
+      }
+      const tok = await ensureDriveToken(true);
+      if (tok) { toast("Google Drive connected."); updateDriveStatus(); }
+      else toast("Drive connection cancelled.");
+    });
+
+    // Cancel booking
+    $("#cancelBookingBtn").addEventListener("click", ()=> location.hash = "#/upcoming");
+
+    // Save booking
+    $("#bookingForm").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+
+      const customer = resolveCustomerFromInput();
+      if (!customer){
+        toast("Select an existing customer or add a new one.");
+        return;
+      }
+      $("#customerId").value = customer.id;
+
+      const dt = $("#bookingDate").value;
+      if (!dt){ toast("Booking date is required."); return; }
+
+      const id = ($("#bookingId").value || "").trim();
+      const isEdit = !!id;
+
+      let bookings = loadBookings();
+      let prev = null;
+      if (isEdit){
+        prev = bookings.find(x=>x.id===id);
+        if (!prev){ toast("Booking not found."); return; }
+      }
+
+      let images = Array.isArray(prev?.images)
+        ? prev.images.filter(img => (img?.id && !currentRemovedImageIds.has(img.id)) || (img?.driveId && !currentRemovedDriveIds.has(img.driveId)))
+        : [];
+
+      // delete removed blobs (finalize)
+      if (prev?.images?.length){
+        for (const img of prev.images){
+          if (img?.id && currentRemovedImageIds.has(img.id)) {
+            await idbDeleteImage(img.id).catch(()=>{});
+          }
+          if (img?.driveId && currentRemovedDriveIds.has(img.driveId)) {
+            await driveDeleteFile(img.driveId);
+          }
+        }
+      }
+
+      // add newly selected images
+      const newImgs = await readAndStoreImages($("#images"));
+      images = images.concat(newImgs);
+
+      const total = parseFloat($("#total").value || "0") || 0;
+      const advance = parseFloat($("#advance").value || "0") || 0;
+
+      const booking = {
+        id: isEdit ? prev.id : uid("b_"),
+        customerId: customer.id,
+        paymentMethod: $("#paymentMethod").value,
+        type: $("#bookingType").value,
+        date: new Date(dt).toISOString().slice(0,16),
+        status: $("#status").value,
+        currency: $("#currency").value,
+        total,
+        advance,
+        note: ($("#note").value || "").trim(),
+        images,
+        updatedAt: Date.now(),
+        createdAt: prev?.createdAt || Date.now(),
+      };
+
+      if (isEdit){
+        bookings = bookings.map(x=> x.id===booking.id ? booking : x);
+      } else {
+        bookings.push(booking);
+      }
+
+      const r = saveBookings(bookings);
+      if (!r.ok){
+        toast("Cannot save booking (storage full?).");
+        return;
+      }
+
+      $("#images").value = "";
+      currentRemovedImageIds = new Set();
+      currentRemovedDriveIds = new Set();
+      toast("Booking saved.");
+      location.hash = "#/upcoming";
+    });
+
+    // Login
+    $("#loginBtn").addEventListener("click", ()=>{
+      const pw = ($("#pw").value || "").trim();
+      if (pw === LOGIN_PASSWORD){
+        setAuthed(true);
+        $("#loginHelp").style.display = "none";
+        route();
+      } else {
+        $("#loginHelp").style.display = "block";
+      }
+    });
+
+    // ===== Init =====
+    async function init(){
+      setLogoLocal();
+      if (DRIVE_ENABLED) driveInit();
+      updateDriveStatus();
+
+      try{ await openDb(); } catch { toast("IndexedDB not available."); }
+
+      refreshCustomerIndex();
+
+      if (isAuthed()){
+        $("#loginWrap").style.display = "none";
+        $("#app").style.display = "block";
+      } else {
+        $("#app").style.display = "none";
+        $("#loginWrap").style.display = "grid";
+      }
+
+      window.addEventListener("hashchange", route);
+      route();
+    }
+    init();
+  </script>
+</body>
+</html>
