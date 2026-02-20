@@ -1,0 +1,1909 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Inky Vibes Tattoo - Reservation System</title>
+
+  <style>
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#0b1220;
+      --muted:#5a677a;
+      --border:rgba(16, 24, 40, .12);
+      --accent:#2563eb;
+      --danger:#dc2626;
+      --ok:#16a34a;
+      --warn:#f59e0b;
+      --shadow:0 10px 26px rgba(16,24,40,.08);
+      --r:14px;
+      --gap:14px;
+      --type-tattoo:#f59e0b;
+      --type-design:#2563eb;
+    }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background:var(--bg); color:var(--text); }
+    a{ color:inherit; text-decoration:none; }
+    button,input,select,textarea{ font:inherit; }
+
+    .loginWrap{ min-height:100vh; display:grid; place-items:center; padding:18px; }
+    .loginCard{ width:min(520px, 100%); background:var(--card); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow); overflow:hidden; }
+    .loginTop{ padding:18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px; }
+    .loginLogo{ width:70px; height:70px; border-radius:999px; border:1px solid var(--border); object-fit:cover; background:#fff; box-shadow: 0 10px 22px rgba(16,24,40,.10); flex:0 0 auto; }
+    .loginTitle{ font-weight:950; font-size:18px; line-height:1.1; margin:0; }
+    .loginSub{ margin-top:6px; color:var(--muted); font-size:13px; }
+    .loginBody{ padding:18px; }
+    .loginField{ display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+    .loginField label{ font-size:12px; color:var(--muted); }
+    .loginField input{ padding:12px; border-radius:12px; border:1px solid var(--border); outline:none; background:#fff; }
+    .loginActions{ display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; margin-top:6px; }
+    .loginErr{ display:none; margin-top:10px; padding:10px 12px; border-radius:12px; border:1px solid rgba(220,38,38,.25); background:rgba(220,38,38,.06); color:rgba(220,38,38,.95); font-size:13px; font-weight:700; }
+
+    header{
+      position:sticky; top:0; z-index:60;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 14px;
+      border-bottom:1px solid var(--border);
+      background:rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+    }
+    .hLeft{ display:flex; align-items:center; gap:10px; min-width:0; }
+    .hambtn{
+      width:42px; height:40px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:#fff;
+      cursor:pointer;
+      display:inline-grid; place-items:center;
+      user-select:none;
+    }
+    .hambtn:hover{ background:rgba(16,24,40,.03); }
+    .brandline{ display:flex; align-items:center; gap:10px; min-width:0; cursor:pointer; user-select:none; }
+    .brandlogo{ width:40px; height:40px; border-radius:999px; border:1px solid var(--border); background:#fff; object-fit:cover; box-shadow: 0 6px 16px rgba(16,24,40,.08); flex:0 0 auto; }
+    .brandtext{ display:flex; flex-direction:column; min-width:0; }
+    .brandtitle{ font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .brandsub{ font-size:12px; color:var(--muted); margin-top:2px; }
+
+    .container{ padding:16px; max-width:1120px; margin:0 auto; }
+    .grid{ display:grid; gap:var(--gap); }
+    .card{ background:var(--card); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--shadow); overflow:hidden; }
+    .card-h{ padding:16px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+    .title{ font-size:18px; font-weight:900; margin:0; }
+    .subtitle{ margin:6px 0 0; font-size:13px; color:var(--muted); line-height:1.35; }
+    .card-b{ padding:16px; }
+
+    .btn{
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      transition:.15s transform,.15s background;
+      display:inline-flex; align-items:center; gap:8px;
+      user-select:none;
+    }
+    .btn:hover{ background:rgba(16,24,40,.03); transform:translateY(-1px); }
+    .btn.primary{ background:rgba(37,99,235,.10); border-color:rgba(37,99,235,.28); color:rgba(37,99,235,.95); }
+    .btn.danger{ background:rgba(220,38,38,.08); border-color:rgba(220,38,38,.25); color:rgba(220,38,38,.95); }
+    .btn:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
+
+    .toolbar{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .search{ display:flex; align-items:center; gap:10px; flex:1; min-width:240px; padding:10px 12px; border-radius:12px; border:1px solid var(--border); background:#fff; }
+    .search input{ width:100%; border:none; outline:none; background:transparent; color:var(--text); }
+
+    .table-wrap{ overflow:auto; border-radius:var(--r); border:1px solid var(--border); background:#fff; }
+    table{ width:100%; border-collapse:collapse; min-width:1020px; }
+    th,td{ padding:12px 10px; border-bottom:1px solid var(--border); text-align:left; font-size:14px; vertical-align:top; }
+    th{ font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; }
+
+    .actions{ display:flex; gap:8px; flex-wrap:wrap; }
+    .iconbtn{ width:40px; height:36px; display:inline-grid; place-items:center; border-radius:12px; border:1px solid var(--border); background:#fff; cursor:pointer; user-select:none; }
+    .iconbtn:hover{ background:rgba(16,24,40,.03); }
+
+    .pill{ display:inline-flex; align-items:center; font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid var(--border); background:#fff; color:var(--muted); font-weight:700; }
+    .pill.ok{ border-color:rgba(22,163,74,.25); color:rgba(22,163,74,.95); background:rgba(22,163,74,.06); }
+    .pill.warn{ border-color:rgba(245,158,11,.28); color:rgba(245,158,11,.95); background:rgba(245,158,11,.08); }
+    .pill.danger{ border-color:rgba(220,38,38,.25); color:rgba(220,38,38,.95); background:rgba(220,38,38,.06); }
+
+    .type-pill{ display:inline-flex; align-items:center; font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid var(--border); background:#fff; font-weight:900; }
+    .type-pill.tattoo{ border-color:rgba(245,158,11,.35); color:var(--type-tattoo); background:rgba(245,158,11,.10); }
+    .type-pill.design{ border-color:rgba(37,99,235,.30); color:var(--type-design); background:rgba(37,99,235,.10); }
+
+    .thumbs{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+    .thumb{ width:34px; height:34px; border-radius:10px; border:1px solid var(--border); object-fit:cover; background:#fff; cursor:pointer; }
+    .thumbMore{ font-size:12px; color:var(--muted); font-weight:800; padding:6px 10px; border:1px solid var(--border); border-radius:999px; background:rgba(16,24,40,.02); }
+
+    form .row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .field{ display:flex; flex-direction:column; gap:7px; margin-bottom:12px; }
+    label{ font-size:12px; color:var(--muted); letter-spacing:.02em; }
+    .req::after{ content:" *"; color:var(--danger); font-weight:800; }
+    input,select,textarea{ padding:12px; border-radius:12px; border:1px solid var(--border); background:#fff; color:var(--text); outline:none; }
+    textarea{ resize:vertical; min-height:92px; }
+    .help{ font-size:12px; color:var(--muted); line-height:1.35; }
+    .form-actions{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; padding-top:6px; }
+
+    .toggleBox{ border:1px solid var(--border); border-radius:14px; background:rgba(16,24,40,.02); padding:12px; margin:10px 0 12px; }
+
+    .toast{ position:fixed; right:16px; bottom:16px; padding:12px 14px; border-radius:14px; border:1px solid var(--border); background:#fff; box-shadow:var(--shadow); display:none; max-width:min(520px, calc(100% - 32px)); z-index:3000; font-size:14px; }
+
+    .modalOverlay{ position:fixed; inset:0; background:rgba(11,18,32,.28); display:none; z-index:2000; padding:16px; }
+    .modal{ max-width:640px; margin:6vh auto 0; background:#fff; border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; }
+    .modalH{ padding:14px 16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .modalT{ font-weight:900; margin:0; font-size:16px; }
+    .modalB{ padding:16px; }
+    .closeX{ width:38px;height:36px; border-radius:12px; border:1px solid var(--border); background:#fff; cursor:pointer; user-select:none; }
+    .closeX:hover{ background:rgba(16,24,40,.03); }
+
+    .gallery{ display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; }
+    .gallery img{ width:100%; height:120px; border-radius:12px; border:1px solid var(--border); object-fit:cover; background:#fff; cursor:pointer; }
+    .viewer{ display:none; margin-top:12px; border:1px solid var(--border); border-radius:16px; overflow:hidden; background:#fff; }
+    .viewer img{ width:100%; height:auto; display:block; }
+
+    .inlineRow{ display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-top:6px; }
+
+    .drawerOverlay{ position:fixed; inset:0; background:rgba(11,18,32,.28); display:none; z-index:1000; }
+    .drawer{
+      position:fixed; top:0; left:0; bottom:0;
+      width:min(340px, 86vw);
+      background:#fff;
+      border-right:1px solid var(--border);
+      box-shadow: var(--shadow);
+      transform:translateX(-110%);
+      transition: transform .18s ease;
+      z-index:1100;
+      display:flex;
+      flex-direction:column;
+    }
+    .drawer.open{ transform:translateX(0); }
+    .drawerHeader{ padding:14px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .drawerBrand{ display:flex; align-items:center; gap:10px; min-width:0; cursor:pointer; user-select:none; }
+    .drawerBrand img{ width:44px; height:44px; border-radius:999px; border:1px solid var(--border); object-fit:cover; background:#fff; flex:0 0 auto; }
+    .drawerBrand .t1{ font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .drawerBrand .t2{ font-size:12px; color:var(--muted); margin-top:2px; }
+    .drawerNav{ padding:14px; display:flex; flex-direction:column; gap:10px; overflow:auto; }
+    .navItem{ display:flex; align-items:center; gap:10px; padding:12px; border:1px solid var(--border); background:rgba(16,24,40,.02); border-radius:12px; cursor:pointer; user-select:none; }
+    .navItem.active{ border-color:rgba(37,99,235,.35); background:rgba(37,99,235,.08); }
+    .navIcon{ width:26px; height:26px; display:inline-grid; place-items:center; border-radius:9px; background:rgba(37,99,235,.10); border:1px solid rgba(37,99,235,.25); font-size:12px; color:rgba(37,99,235,.95); font-weight:800; flex:0 0 auto; }
+
+    .suggest{
+      position:absolute;
+      left:0; right:0;
+      top:calc(100% + 6px);
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:14px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      z-index:999;
+      max-height:280px;
+      overflow:auto;
+    }
+    .suggestItem{ padding:10px 12px; cursor:pointer; border-bottom:1px solid var(--border); user-select:none; }
+    .suggestItem:last-child{ border-bottom:none; }
+    .suggestItem:hover{ background:rgba(16,24,40,.03); }
+    .suggestTop{ font-weight:900; }
+    .suggestSub{ margin-top:4px; font-size:12px; color:var(--muted); }
+
+    .statusBar{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+      margin-top:8px;
+    }
+    .modePill{
+      font-size:12px; font-weight:900;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(16,24,40,.02);
+      color:var(--muted);
+    }
+    .modePill.on{ color:rgba(22,163,74,.95); border-color:rgba(22,163,74,.25); background:rgba(22,163,74,.06); }
+    .modePill.off{ color:rgba(220,38,38,.95); border-color:rgba(220,38,38,.25); background:rgba(220,38,38,.06); }
+
+    @media (max-width: 640px){
+      form .row{ grid-template-columns:1fr; }
+      .container{ padding:14px; }
+      .gallery{ grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 520px){
+      table{ min-width: 860px; }
+      .iconbtn{ width:44px; height:40px; }
+      .btn{ padding:11px 13px; }
+      .search{ min-width: 0; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- LOGIN VIEW -->
+  <main id="loginView" class="loginWrap" style="display:none;">
+    <div class="loginCard">
+      <div class="loginTop">
+        <img id="loginLogo" class="loginLogo" alt="Logo" />
+        <div style="min-width:0;">
+          <p class="loginTitle">Inky Vibes Tattoo</p>
+          <div class="loginSub">Booking & reservation system</div>
+        </div>
+      </div>
+
+      <div class="loginBody">
+        <form id="loginForm" autocomplete="off">
+          <div class="loginField">
+            <label for="loginPassword">Password</label>
+            <input id="loginPassword" type="password" inputmode="numeric" placeholder="Enter password…" />
+          </div>
+
+          <div class="loginActions">
+            <button class="btn primary" type="submit">Log In</button>
+          </div>
+
+          <div class="loginErr" id="loginError">Wrong password. Try again.</div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <!-- APP WRAPPER -->
+  <div id="appWrap" style="display:none;">
+    <!-- Drawer -->
+    <div class="drawerOverlay" id="drawerOverlay" aria-hidden="true"></div>
+    <aside class="drawer" id="drawer" aria-hidden="true">
+      <div class="drawerHeader">
+        <div class="drawerBrand" id="drawerBrandLink" title="Go to Upcoming Bookings">
+          <img id="drawerLogo" alt="Logo" />
+          <div style="min-width:0;">
+            <div class="t1">Inky Vibes Tattoo</div>
+            <div class="t2">Reservation System</div>
+          </div>
+        </div>
+        <button class="closeX" type="button" id="drawerClose">✕</button>
+      </div>
+
+      <div class="drawerNav" id="drawerNav">
+        <div class="navItem" data-route="/upcoming"><span class="navIcon">U</span> Upcoming Bookings</div>
+        <div class="navItem" data-route="/bookings"><span class="navIcon">B</span> Bookings</div>
+        <div class="navItem" data-route="/customers"><span class="navIcon">C</span> Customers</div>
+        <div class="navItem" data-route="/backup"><span class="navIcon">R</span> Backup / Restore</div>
+        <div class="navItem" data-route="/booking/new"><span class="navIcon">+</span> + New Booking</div>
+      </div>
+    </aside>
+
+    <header>
+      <div class="hLeft">
+        <button class="hambtn" id="hambtn" aria-label="Open menu">☰</button>
+
+        <div class="brandline" id="topBrandLink" title="Go to Upcoming Bookings">
+          <img id="topLogo" class="brandlogo" alt="Logo" />
+          <div class="brandtext">
+            <div class="brandtitle">Inky Vibes Tattoo - Reservation System</div>
+            <div class="brandsub" id="headerSubtitle">Bookings & customers management</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="container">
+      <!-- UPCOMING BOOKINGS -->
+      <section id="view-upcoming" class="grid" style="display:none;">
+        <div class="card">
+          <div class="card-h">
+            <div>
+              <h2 class="title">Upcoming Bookings</h2>
+              <p class="subtitle">Sorted by date (nearest first).</p>
+              <div class="statusBar">
+                <span class="modePill" id="cloudPill">Cloud: ?</span>
+                <span class="modePill" id="localPill">Local backup: ?</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+              <a class="btn primary" href="#/booking/new">+ New Booking</a>
+            </div>
+          </div>
+          <div class="card-b">
+            <div class="toolbar">
+              <div class="search">
+                <span style="color:var(--muted);font-size:12px;">🔎</span>
+                <input id="upSearch" placeholder="Search upcoming bookings…" />
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <select id="upTypeFilter">
+                  <option value="" selected>Type</option>
+                  <option>Design</option>
+                  <option>Tattoo</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="min-width:140px;">Type</th>
+                    <th style="min-width:220px;">Customer</th>
+                    <th style="min-width:140px;">Phone</th>
+                    <th style="min-width:220px;">Images</th>
+                    <th style="min-width:150px;">Status</th>
+                    <th style="min-width:200px;">Date</th>
+                    <th style="min-width:220px;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="upTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BOOKINGS HUB -->
+      <section id="view-bookings-hub" class="grid" style="display:none;">
+        <div class="card">
+          <div class="card-h">
+            <div>
+              <h2 class="title">Bookings</h2>
+              <p class="subtitle">Choose Design or Tattoo bookings.</p>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <a class="btn primary" href="#/booking/new">+ New Booking</a>
+            </div>
+          </div>
+          <div class="card-b" style="display:flex;gap:12px;flex-wrap:wrap;">
+            <a class="btn primary" href="#/bookings/design">Design bookings</a>
+            <a class="btn primary" href="#/bookings/tattoo">Tattoo bookings</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- BOOKINGS LIST -->
+      <section id="view-bookings-list" class="grid" style="display:none;">
+        <div class="card">
+          <div class="card-h">
+            <div>
+              <h2 class="title" id="allTitle">Bookings</h2>
+              <p class="subtitle">All bookings (past + future), newest first.</p>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+              <a class="btn" href="#/bookings">← Back</a>
+              <a class="btn primary" href="#/booking/new">+ New Booking</a>
+            </div>
+          </div>
+          <div class="card-b">
+            <div class="toolbar">
+              <div class="search">
+                <span style="color:var(--muted);font-size:12px;">🔎</span>
+                <input id="allSearch" placeholder="Search bookings…" />
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="min-width:140px;">Type</th>
+                    <th style="min-width:220px;">Customer</th>
+                    <th style="min-width:140px;">Phone</th>
+                    <th style="min-width:220px;">Images</th>
+                    <th style="min-width:150px;">Status</th>
+                    <th style="min-width:200px;">Date</th>
+                    <th style="min-width:220px;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="allTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BOOKING FORM -->
+      <section id="view-booking-form" class="grid" style="display:none;">
+        <div class="card">
+          <div class="card-h">
+            <div>
+              <h2 class="title" id="bookingFormTitle">+ New Booking</h2>
+              <p class="subtitle">Create a new booking or edit an existing one.</p>
+              <div class="statusBar">
+                <span class="modePill" id="cloudPill2">Cloud: ?</span>
+                <span class="modePill on" id="drivePill">Drive: on (server)</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <a class="btn" href="#/upcoming">← Back</a>
+            </div>
+          </div>
+
+          <div class="card-b">
+            <form id="bookingForm" novalidate>
+              <input type="hidden" id="bookingId" />
+              <input type="hidden" id="customerId" />
+
+              <div class="row">
+                <div class="field">
+                  <label class="req" for="customerSearch">Select customer</label>
+
+                  <div style="position:relative;">
+                    <input id="customerSearch" placeholder="Type name / phone / email (e.g. v, 040, @hotmail)" autocomplete="off" required />
+                    <div id="customerSuggest" class="suggest" style="display:none;"></div>
+                  </div>
+
+                  <div class="inlineRow">
+                    <div class="help">Type to search. Click a customer to auto-fill.</div>
+                    <button class="btn primary" type="button" id="addCustomerBtn">+ Add New Customer</button>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label class="req" for="paymentMethod">Payment method</label>
+                  <select id="paymentMethod" required>
+                    <option>Cash</option>
+                    <option>Credit Card</option>
+                    <option>Klarna</option>
+                    <option>Mobile Payments</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="toggleBox" id="addCustomerBox" style="display:none;">
+                <div style="font-weight:900;margin-bottom:8px;">+ Add New Customer</div>
+                <div class="row">
+                  <div class="field">
+                    <label class="req" for="newCustName">Customer name</label>
+                    <input id="newCustName" placeholder="e.g. John Smith" />
+                  </div>
+                  <div class="field">
+                    <label for="newCustEmail">Email</label>
+                    <input id="newCustEmail" type="email" placeholder="email@example.com" />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="field">
+                    <label for="newCustPhone">Phone</label>
+                    <input id="newCustPhone" inputmode="tel" placeholder="+358 40..." />
+                    <div class="help" style="margin-top:4px;">+358 stays (no double prefix).</div>
+                  </div>
+                  <div class="field">
+                    <label for="newCustNotes">Notes</label>
+                    <input id="newCustNotes" placeholder="Optional" />
+                  </div>
+                </div>
+                <div class="help">Customer will be created when you save the booking.</div>
+              </div>
+
+              <div class="row">
+                <div class="field">
+                  <label class="req" for="bookingType">Booking type</label>
+                  <select id="bookingType" required>
+                    <option>Design</option>
+                    <option>Tattoo</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="req" for="bookingDate">Booking date</label>
+                  <input id="bookingDate" type="datetime-local" required />
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="field">
+                  <label class="req" for="status">Status</label>
+                  <select id="status" required>
+                    <option>Approved</option>
+                    <option>Pending</option>
+                    <option>Cancelled</option>
+                    <option>Done</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="currency">Currency</label>
+                  <select id="currency">
+                    <option value="EUR">EUR</option>
+                    <option value="USD">USD</option>
+                    <option value="GBP">GBP</option>
+                    <option value="SEK">SEK</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="field">
+                  <label for="total">Total</label>
+                  <input id="total" inputmode="decimal" placeholder="0.00" />
+                </div>
+                <div class="field">
+                  <label for="advance">Advance</label>
+                  <input id="advance" inputmode="decimal" placeholder="0.00" />
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="field">
+                  <label for="remaining">Remaining</label>
+                  <input id="remaining" readonly />
+                  <div class="help">Auto: total - advance</div>
+                </div>
+                <div class="field">
+                  <label for="images">Add images</label>
+                  <input id="images" type="file" multiple accept="image/*" />
+                  <div class="help">Images upload to Drive automatically (server). Thumbnails visible in system.</div>
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="note">Note</label>
+                <textarea id="note" placeholder="Client note..."></textarea>
+              </div>
+
+              <div class="form-actions">
+                <button class="btn danger" type="button" id="deleteBookingBtn" style="display:none;">Delete</button>
+                <button class="btn" type="button" id="cancelBookingBtn">Cancel</button>
+                <button class="btn primary" type="submit" id="saveBookingBtn">Save booking</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- CUSTOMERS -->
+      <section id="view-customers" class="grid" style="display:none;">
+        <div class="card">
+          <div class="card-h">
+            <div>
+              <h2 class="title">Customers</h2>
+              <p class="subtitle">Tap Edit to update customer details.</p>
+            </div>
+          </div>
+          <div class="card-b">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="min-width:240px;">Name</th>
+                    <th style="min-width:240px;">Email</th>
+                    <th style="min-width:180px;">Phone</th>
+                    <th style="min-width:220px;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="customersTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BACKUP / RESTORE -->
+      <section id="view-backup" class="grid" style="display:none;">
+        <div class="card">
+          <div class="card-h">
+            <div>
+              <h2 class="title">Backup / Restore</h2>
+              <p class="subtitle">Phone local backup + JSON export/import.</p>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <a class="btn" href="#/upcoming">← Back</a>
+            </div>
+          </div>
+          <div class="card-b">
+            <div class="grid" style="gap:12px;">
+              <div class="card" style="box-shadow:none;">
+                <div class="card-b">
+                  <div style="font-weight:900;margin-bottom:8px;">Local backup status</div>
+                  <div class="statusBar">
+                    <span class="modePill" id="cloudPill3">Cloud: ?</span>
+                    <span class="modePill" id="localPill2">Local backup: ?</span>
+                  </div>
+                  <div class="help" style="margin-top:8px;">
+                    App, her başarılı Cloud export sonrası otomatik local backup alır.
+                    Cloud çökerse otomatik Local Mode ile çalışır.
+                  </div>
+                </div>
+              </div>
+
+              <div class="card" style="box-shadow:none;">
+                <div class="card-b">
+                  <div style="font-weight:900;margin-bottom:8px;">Download backup file</div>
+                  <button class="btn primary" type="button" id="downloadBackupBtn">Download backup (.json)</button>
+                  <div class="help" style="margin-top:8px;">This downloads your current local backup to a file.</div>
+                </div>
+              </div>
+
+              <div class="card" style="box-shadow:none;">
+                <div class="card-b">
+                  <div style="font-weight:900;margin-bottom:8px;">Import backup file</div>
+                  <input id="importBackupFile" type="file" accept="application/json" />
+                  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
+                    <button class="btn primary" type="button" id="importBackupBtn">Import into phone (local)</button>
+                    <button class="btn" type="button" id="tryUploadBackupBtn" disabled title="Requires Apps Script action=import">Upload backup to Sheet (optional)</button>
+                  </div>
+                  <div class="help" style="margin-top:8px;">
+                    Import only affects your phone local backup. Cloud upload needs Apps Script "import" endpoint.
+                  </div>
+                </div>
+              </div>
+
+              <div class="card" style="box-shadow:none;">
+                <div class="card-b">
+                  <div style="font-weight:900;margin-bottom:8px;">Force refresh from Cloud</div>
+                  <button class="btn" type="button" id="forceCloudRefreshBtn">Reload from Sheet now</button>
+                  <div class="help" style="margin-top:8px;">Fetches latest data from Sheets and updates local backup.</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Customer Edit Modal -->
+    <div class="modalOverlay" id="custModalOverlay" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="custModalTitle">
+        <div class="modalH">
+          <p class="modalT" id="custModalTitle">Edit Customer</p>
+          <button class="closeX" type="button" id="custModalClose">✕</button>
+        </div>
+        <div class="modalB">
+          <form id="custEditForm" novalidate>
+            <input type="hidden" id="custEditId" />
+            <div class="field">
+              <label class="req" for="custEditName">Name</label>
+              <input id="custEditName" required />
+            </div>
+            <div class="field">
+              <label for="custEditEmail">Email</label>
+              <input id="custEditEmail" type="email" />
+            </div>
+            <div class="field">
+              <label for="custEditPhone">Phone</label>
+              <input id="custEditPhone" inputmode="tel" placeholder="+358 40..." />
+              <div class="help" style="margin-top:4px;">+358 stays (no double prefix).</div>
+            </div>
+            <div class="field">
+              <label for="custEditNotes">Notes</label>
+              <input id="custEditNotes" />
+            </div>
+            <div class="form-actions">
+              <button class="btn" type="button" id="custEditCancel">Cancel</button>
+              <button class="btn primary" type="submit">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Images Preview Modal -->
+    <div class="modalOverlay" id="imgModalOverlay" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="imgModalTitle">
+        <div class="modalH">
+          <p class="modalT" id="imgModalTitle">Booking Images</p>
+          <button class="closeX" type="button" id="imgModalClose">✕</button>
+        </div>
+        <div class="modalB">
+          <div class="gallery" id="imgGallery"></div>
+          <div class="viewer" id="imgViewer">
+            <img id="imgViewerImg" alt="Preview" />
+          </div>
+          <div class="help" style="margin-top:10px;">Tap an image to preview.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div class="modalOverlay" id="confirmOverlay" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+        <div class="modalH">
+          <p class="modalT" id="confirmTitle">Confirm delete</p>
+          <button class="closeX" type="button" id="confirmClose">✕</button>
+        </div>
+        <div class="modalB">
+          <div id="confirmText" style="color:var(--muted);line-height:1.4;">Are you sure?</div>
+          <div class="form-actions" style="margin-top:14px;">
+            <button class="btn" type="button" id="confirmCancel">Cancel</button>
+            <button class="btn danger" type="button" id="confirmYes">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script>
+    // ===== LOGIN SETTINGS =====
+    const LOGIN_PASSWORD = "9197";
+    const AUTH_KEY = "inky_auth_ok_v1"; // sessionStorage
+    const LOGO_URL = "./01.jpg";
+
+    // ===== APPS SCRIPT URL (YOUR LINK) =====
+    const APP_SCRIPT_URL =
+      "https://script.google.com/macros/s/AKfycbwynK5uGGFO-rSwjjBWy2bUccn3q8zeSqNpEy-mwqctf9Az_aC9QBUgxD7CZdcggzKBPQ/exec";
+
+    // ===== LOCAL BACKUP (PHONE) =====
+    const LOCAL_BACKUP_KEY = "inky_backup_v1";
+
+    const $ = (s) => document.querySelector(s);
+    function uid(prefix=""){ return prefix + Math.random().toString(16).slice(2) + Date.now().toString(16); }
+
+    function toast(msg){
+      const el = $("#toast");
+      el.textContent = msg;
+      el.style.display = "block";
+      clearTimeout(window.__toast);
+      window.__toast = setTimeout(() => (el.style.display="none"), 2600);
+    }
+
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+    }
+    function escapeAttr(s){ return escapeHtml(s).replaceAll("`","&#096;"); }
+
+    function money(v){
+      const s = String(v ?? "").replace(",", ".").trim();
+      const n = Number.parseFloat(s);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function toLocalDT(d){
+      const p = (x)=>String(x).padStart(2,"0");
+      return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+    function fmtDT(iso){
+      if (!iso) return "";
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return String(iso);
+      const p = (x)=>String(x).padStart(2,"0");
+      return `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+    function pillClass(status){
+      const s = (status||"").toLowerCase();
+      if (s === "approved" || s === "done") return "ok";
+      if (s === "pending") return "warn";
+      if (s === "cancelled") return "danger";
+      return "";
+    }
+    function typePill(type){
+      const t = (type || "").toLowerCase();
+      if (t === "tattoo") return `<span class="type-pill tattoo">Tattoo</span>`;
+      if (t === "design") return `<span class="type-pill design">Design</span>`;
+      return escapeHtml(type || "—");
+    }
+    function isUpcoming(iso){
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return true;
+      return d.getTime() >= Date.now();
+    }
+
+    // PHONE: enforce +358, avoid double prefix
+    function normalizeFiPhone(raw){
+      const s0 = String(raw ?? "").trim();
+      if (!s0) return "";
+      const cleaned = s0.replace(/\s+/g, "");
+      if (cleaned.startsWith("+358")) return "+358" + cleaned.slice(4).replace(/[^\d]/g, "");
+      if (cleaned.startsWith("358")) return "+358" + cleaned.slice(3).replace(/[^\d]/g, "");
+      if (cleaned.startsWith("0")) return "+358" + cleaned.slice(1).replace(/[^\d]/g, "");
+      const digits = cleaned.replace(/[^\d]/g, "");
+      return digits ? "+358" + digits : "";
+    }
+    function enforcePlus358(inputEl){
+      if (!inputEl) return;
+      const ensurePrefix = () => {
+        const v = String(inputEl.value ?? "");
+        if (!v) return;
+        const norm = normalizeFiPhone(v);
+        if (norm && norm !== v) inputEl.value = norm;
+      };
+      inputEl.addEventListener("focus", () => {
+        if (!inputEl.value.trim()) inputEl.value = "+358";
+        ensurePrefix();
+      });
+      inputEl.addEventListener("blur", () => {
+        const v = inputEl.value.trim();
+        if (!v) return;
+        inputEl.value = normalizeFiPhone(v) || "";
+      });
+      inputEl.addEventListener("input", () => {
+        const v = inputEl.value;
+        if (v && v.startsWith("+358+358")) inputEl.value = "+358" + v.slice(8);
+        if (v && v.startsWith("+358358")) inputEl.value = "+358" + v.slice(7);
+      });
+      inputEl.addEventListener("keydown", (e) => {
+        if (e.key !== "Backspace" && e.key !== "Delete") return;
+        const v = inputEl.value || "";
+        if (!v.startsWith("+358")) return;
+        const pos = inputEl.selectionStart ?? 0;
+        if (pos <= 4) e.preventDefault();
+      });
+    }
+
+    // ===== AUTH / LOGIN =====
+    function isAuthed(){ return sessionStorage.getItem(AUTH_KEY) === "1"; }
+    function setAuthed(ok){
+      if (ok) sessionStorage.setItem(AUTH_KEY, "1");
+      else sessionStorage.removeItem(AUTH_KEY);
+    }
+    function showLogin(show){
+      $("#loginView").style.display = show ? "grid" : "none";
+      $("#appWrap").style.display = show ? "none" : "block";
+      if (show) {
+        $("#loginPassword").value = "";
+        $("#loginError").style.display = "none";
+        $("#loginPassword").focus();
+      }
+    }
+    function tryLogin(pass){
+      const ok = String(pass || "").trim() === LOGIN_PASSWORD;
+      if (!ok) return false;
+      setAuthed(true);
+      return true;
+    }
+
+    // ===== DRAWER =====
+    function openDrawer(){
+      $("#drawerOverlay").style.display = "block";
+      $("#drawerOverlay").setAttribute("aria-hidden","false");
+      $("#drawer").classList.add("open");
+      $("#drawer").setAttribute("aria-hidden","false");
+    }
+    function closeDrawer(){
+      $("#drawerOverlay").style.display = "none";
+      $("#drawerOverlay").setAttribute("aria-hidden","true");
+      $("#drawer").classList.remove("open");
+      $("#drawer").setAttribute("aria-hidden","true");
+    }
+    function go(route){
+      closeDrawer();
+      location.hash = "#" + route;
+    }
+    function setActiveDrawer(route){
+      document.querySelectorAll("#drawerNav .navItem").forEach(el=>{
+        el.classList.toggle("active", el.dataset.route === route);
+      });
+    }
+    function goUpcoming(){ closeDrawer(); location.hash = "#/upcoming"; }
+
+    // ===== CONFIRM =====
+    function openConfirm({ title = "Confirm delete", text = "Are you sure?", onYes }) {
+      $("#confirmTitle").textContent = title;
+      $("#confirmText").textContent = text;
+
+      const overlay = $("#confirmOverlay");
+      overlay.style.display = "block";
+      overlay.setAttribute("aria-hidden", "false");
+
+      const cleanup = () => {
+        overlay.style.display = "none";
+        overlay.setAttribute("aria-hidden", "true");
+        $("#confirmYes").onclick = null;
+      };
+
+      $("#confirmYes").onclick = async () => {
+        try { await onYes?.(); }
+        finally { cleanup(); }
+      };
+
+      $("#confirmClose").onclick = cleanup;
+      $("#confirmCancel").onclick = cleanup;
+      overlay.onclick = (e) => { if (e.target === overlay) cleanup(); };
+    }
+
+    // ===== APPS SCRIPT API (NO JSON HEADER -> avoids preflight) =====
+    let CLOUD_OK = false;
+    let CACHE = { loaded:false, customers:[], bookings:[] };
+
+    async function apiGet(action){
+      const res = await fetch(APP_SCRIPT_URL + "?action=" + encodeURIComponent(action), { method:"GET" });
+      const data = await res.json().catch(()=>null);
+      if (!data || data.ok !== true) throw new Error(data?.error || "GET failed");
+      return data;
+    }
+    async function apiCall(action, payload){
+      const res = await fetch(APP_SCRIPT_URL, {
+        method:"POST",
+        body: JSON.stringify({ action, payload })
+      });
+      const data = await res.json().catch(()=>null);
+      if (!data || data.ok !== true) throw new Error(data?.error || "API failed");
+      return data;
+    }
+
+    // ===== PATCH: normalize customers (fix select customer search) =====
+    function normalizeCustomer(raw){
+      const c = raw || {};
+      const id =
+        c.id ?? c.ID ?? c.customerId ?? c.CustomerId ?? c.customerID ?? c.customer_id ?? "";
+
+      const name =
+        c.name ?? c.Name ?? c.customerName ?? c.CustomerName ?? c.customer_name ?? "";
+
+      const email =
+        c.email ?? c.Email ?? c.mail ?? c.Mail ?? c.eMail ?? "";
+
+      const phone =
+        c.phone ?? c.Phone ?? c.tel ?? c.Tel ?? c.mobile ?? c.Mobile ?? "";
+
+      const notes =
+        c.notes ?? c.Notes ?? c.note ?? c.Note ?? "";
+
+      return {
+        ...c,
+        id: String(id || ""),
+        name: String(name || ""),
+        email: String(email || ""),
+        phone: String(phone || ""),
+        notes: String(notes || ""),
+      };
+    }
+
+    // ===== LOCAL BACKUP HELPERS =====
+    function loadLocalBackup(){
+      try{
+        const raw = localStorage.getItem(LOCAL_BACKUP_KEY);
+        if (!raw) return null;
+        const obj = JSON.parse(raw);
+        if (!obj || !Array.isArray(obj.customers) || !Array.isArray(obj.bookings)) return null;
+        return obj;
+      }catch{ return null; }
+    }
+    function saveLocalBackup(customers, bookings){
+      const payload = {
+        version: 1,
+        savedAt: new Date().toISOString(),
+        customers: customers || [],
+        bookings: bookings || [],
+      };
+      try{ localStorage.setItem(LOCAL_BACKUP_KEY, JSON.stringify(payload)); }catch{}
+      updateModePills();
+    }
+    function hasLocalBackup(){
+      const b = loadLocalBackup();
+      return !!(b && b.customers && b.bookings);
+    }
+
+    function safeParseImages_(imagesJson){
+      try{
+        const arr = JSON.parse(imagesJson || "[]");
+        return Array.isArray(arr) ? arr : [];
+      } catch {
+        return [];
+      }
+    }
+
+    async function ensureCache(){
+      if (CACHE.loaded) return;
+
+      // Try cloud first
+      try{
+        const data = await apiGet("export");
+        const customers = (data.customers || []).map(normalizeCustomer);
+        const bookings = (data.bookings || []).map(b => ({
+          ...b,
+          total: Number(b.total || 0),
+          advance: Number(b.advance || 0),
+          remaining: Number(b.remaining || 0),
+          images: safeParseImages_(b.imagesJson),
+        }));
+
+        CACHE.customers = customers;
+        CACHE.bookings = bookings;
+        CACHE.loaded = true;
+        CLOUD_OK = true;
+
+        // Save phone backup automatically
+        saveLocalBackup(customers, bookings);
+        updateModePills();
+        return;
+      }catch(e){
+        CLOUD_OK = false;
+        updateModePills();
+      }
+
+      // Cloud failed -> use local backup
+      const local = loadLocalBackup();
+      if (local){
+        CACHE.customers = (local.customers || []).map(normalizeCustomer);
+        CACHE.bookings = (local.bookings || []).map(b => ({
+          ...b,
+          total: Number(b.total || 0),
+          advance: Number(b.advance || 0),
+          remaining: Number(b.remaining || 0),
+          images: Array.isArray(b.images) ? b.images : safeParseImages_(b.imagesJson),
+        }));
+        CACHE.loaded = true;
+        toast("Cloud offline. Running in LOCAL MODE (phone backup).");
+        return;
+      }
+
+      throw new Error("Cloud offline and no local backup found.");
+    }
+
+    async function refreshCache(){
+      CACHE.loaded = false;
+      await ensureCache();
+      await buildCustomerIndex();
+      updateModePills();
+    }
+
+    async function loadCustomers(){ await ensureCache(); return CACHE.customers; }
+    async function loadBookings(){ await ensureCache(); return CACHE.bookings; }
+
+    function updateModePills(){
+      const cloudText = CLOUD_OK ? "Cloud: ON" : "Cloud: OFF";
+      const cloudCls = CLOUD_OK ? "on" : "off";
+      ["#cloudPill","#cloudPill2","#cloudPill3"].forEach(id=>{
+        const el = $(id);
+        if (!el) return;
+        el.textContent = cloudText;
+        el.classList.remove("on","off");
+        el.classList.add(cloudCls);
+      });
+
+      const localOk = hasLocalBackup();
+      const localText = localOk ? "Local backup: OK" : "Local backup: none";
+      const localCls = localOk ? "on" : "off";
+      ["#localPill","#localPill2"].forEach(id=>{
+        const el = $(id);
+        if (!el) return;
+        el.textContent = localText;
+        el.classList.remove("on","off");
+        el.classList.add(localCls);
+      });
+    }
+
+    // ===== IMAGES (Apps Script uploads to Drive, returns viewUrl + thumbUrl) =====
+    function fileToBase64(file){
+      return new Promise((resolve, reject)=>{
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || "");
+          const idx = result.indexOf("base64,");
+          if (idx < 0) return reject(new Error("Base64 read failed"));
+          resolve(result.slice(idx + 7));
+        };
+        reader.onerror = () => reject(reader.error || new Error("File read error"));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function uploadSelectedImages(){
+      const files = Array.from($("#images").files || []).filter(f => (f.type||"").startsWith("image/"));
+      if (!files.length) return [];
+
+      const maxFiles = 8;
+      const pick = files.slice(0, maxFiles);
+
+      const payloadFiles = [];
+      for (const f of pick){
+        const b64 = await fileToBase64(f);
+        payloadFiles.push({ name: f.name, mime: f.type || "image/*", dataBase64: b64 });
+      }
+
+      const res = await apiCall("uploadImages", { files: payloadFiles });
+      return (res.files || []).map(x => ({
+        fileId: x.fileId,
+        name: x.name,
+        mime: x.mime,
+        uploadedAt: x.uploadedAt,
+        viewUrl: x.viewUrl,
+        thumb: x.thumbUrl || x.viewUrl
+      }));
+    }
+
+    function renderThumbs(images, bookingId){
+      const list = Array.isArray(images) ? images : [];
+      if (!list.length) return `<span style="color:var(--muted)">—</span>`;
+      const shown = list.slice(0, 3);
+      const more = list.length - shown.length;
+      const thumbTags = shown.map((img) => {
+        const safe = escapeAttr(img.thumb || img.viewUrl || "");
+        return `<img class="thumb" src="${safe}" alt="img" data-open-gallery="${escapeAttr(bookingId)}" />`;
+      }).join("");
+      const moreHtml = more > 0 ? `<span class="thumbMore">+${more}</span>` : "";
+      return `<div class="thumbs">${thumbTags}${moreHtml}</div>`;
+    }
+
+    function openImgModal(images){
+      const overlay = $("#imgModalOverlay");
+      const gallery = $("#imgGallery");
+      const viewer = $("#imgViewer");
+      const viewerImg = $("#imgViewerImg");
+
+      gallery.innerHTML = "";
+      viewer.style.display = "none";
+      viewerImg.src = "";
+
+      const list = Array.isArray(images) ? images : [];
+      if (!list.length){
+        gallery.innerHTML = `<div style="color:var(--muted)">No images for this booking.</div>`;
+      } else {
+        list.forEach((img) => {
+          const el = document.createElement("img");
+          el.src = img.thumb || img.viewUrl || "";
+          el.alt = img.name || "image";
+          el.addEventListener("click", ()=>{
+            viewerImg.src = img.viewUrl || img.thumb || "";
+            viewer.style.display = "block";
+          });
+          gallery.appendChild(el);
+        });
+      }
+
+      overlay.style.display = "block";
+      overlay.setAttribute("aria-hidden", "false");
+    }
+    function closeImgModal(){
+      $("#imgModalOverlay").style.display = "none";
+      $("#imgModalOverlay").setAttribute("aria-hidden", "true");
+    }
+
+    // ===== CUSTOMERS INDEX + AUTOCOMPLETE =====
+    function formatCustomerLabel(c){
+      const parts = [c.name];
+      if (c.phone) parts.push(c.phone);
+      if (c.email) parts.push(c.email);
+      return parts.join(" — ");
+    }
+
+    async function buildCustomerIndex(){
+      const customers = (await loadCustomers()).slice().sort((a,b)=> (a.name||"").localeCompare(b.name||""));
+      window.__customersSorted = customers;
+
+      const mapLabelToId = new Map();
+      customers.forEach(c => mapLabelToId.set(formatCustomerLabel(c), c.id));
+      window.__customerLabelToId = mapLabelToId;
+    }
+
+    function customerMatchesQuery(c, q){
+      const name = (c.name || "").toLowerCase();
+      const phone = (c.phone || "").toLowerCase();
+      const email = (c.email || "").toLowerCase();
+      return name.includes(q) || phone.includes(q) || email.includes(q);
+    }
+
+    function closeCustomerSuggest(){
+      const box = $("#customerSuggest");
+      if (!box) return;
+      box.style.display = "none";
+      box.innerHTML = "";
+    }
+
+    function renderCustomerSuggest(list){
+      const box = $("#customerSuggest");
+      if (!box) return;
+
+      if (!list.length){
+        closeCustomerSuggest();
+        return;
+      }
+
+      box.innerHTML = list.map(c => `
+        <div class="suggestItem" data-cid="${escapeAttr(c.id)}">
+          <div class="suggestTop">${escapeHtml(c.name || "Unnamed")}</div>
+          <div class="suggestSub">${escapeHtml([c.phone, c.email].filter(Boolean).join(" • ") || "—")}</div>
+        </div>
+      `).join("");
+
+      box.style.display = "block";
+
+      box.querySelectorAll(".suggestItem").forEach(item => {
+        item.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          const id = item.getAttribute("data-cid");
+          setSelectedCustomerById(id);
+          showAddCustomerBox(false);
+          closeCustomerSuggest();
+        });
+      });
+    }
+
+    // PATCH: focus olunca boşken de ilk müşterileri göster
+    function updateCustomerSuggest(showAllIfEmpty = false){
+      const raw = ($("#customerSearch")?.value || "");
+      const q = raw.trim().toLowerCase();
+      const customers = window.__customersSorted || [];
+
+      if (!q){
+        if (!showAllIfEmpty){
+          closeCustomerSuggest();
+          return;
+        }
+        renderCustomerSuggest(customers.slice(0, 12));
+        return;
+      }
+
+      const matches = customers
+        .filter(c => customerMatchesQuery(c, q))
+        .slice(0, 12);
+
+      renderCustomerSuggest(matches);
+    }
+
+    function setSelectedCustomerById(id){
+      const customers = window.__customersSorted || [];
+      const c = customers.find(x => x.id === id) || null;
+      if (!c) return;
+      $("#customerId").value = c.id;
+      $("#customerSearch").value = formatCustomerLabel(c);
+    }
+    function clearSelectedCustomer(){ $("#customerId").value = ""; }
+
+    function showAddCustomerBox(show){
+      $("#addCustomerBox").style.display = show ? "block" : "none";
+      if (show) $("#newCustName").focus();
+    }
+    function clearNewCustomerFields(){
+      $("#newCustName").value = "";
+      $("#newCustEmail").value = "";
+      $("#newCustPhone").value = "";
+      $("#newCustNotes").value = "";
+    }
+
+    async function validateAndGetCustomerId(){
+      const label = $("#customerSearch").value.trim();
+      const map = window.__customerLabelToId || new Map();
+      const existingId = map.get(label);
+
+      const addBoxVisible = $("#addCustomerBox").style.display !== "none";
+      if (!addBoxVisible){
+        if (existingId) { $("#customerId").value = existingId; return existingId; }
+        const hiddenId = $("#customerId").value;
+        if (hiddenId) return hiddenId;
+        toast("Type customer and select from list, or click + Add New Customer.");
+        return null;
+      }
+
+      const name = $("#newCustName").value.trim();
+      const email = $("#newCustEmail").value.trim();
+      const phone = normalizeFiPhone($("#newCustPhone").value.trim());
+      const notes = $("#newCustNotes").value.trim();
+      if (!name){ toast("New customer name is required."); return null; }
+
+      const res = await apiCall("upsertCustomer", { name, email, phone, notes });
+      await refreshCache();
+      showAddCustomerBox(false);
+      clearNewCustomerFields();
+      $("#customerId").value = res.customer.id;
+      $("#customerSearch").value = formatCustomerLabel(res.customer);
+      return res.customer.id;
+    }
+
+    // ===== CUSTOMERS TABLE + MODAL =====
+    function openCustModal(customer){
+      $("#custEditId").value = customer.id;
+      $("#custEditName").value = customer.name || "";
+      $("#custEditEmail").value = customer.email || "";
+      $("#custEditPhone").value = customer.phone || "";
+      $("#custEditNotes").value = customer.notes || "";
+      $("#custModalOverlay").style.display = "block";
+      $("#custModalOverlay").setAttribute("aria-hidden", "false");
+      $("#custEditName").focus();
+    }
+    function closeCustModal(){
+      $("#custModalOverlay").style.display = "none";
+      $("#custModalOverlay").setAttribute("aria-hidden", "true");
+    }
+
+    async function renderCustomersTable(){
+      const customers = (await loadCustomers()).slice().sort((a,b)=> (a.name||"").localeCompare(b.name||""));
+      const tbody = $("#customersTbody");
+      tbody.innerHTML = "";
+
+      if (!customers.length){
+        tbody.innerHTML = `<tr><td colspan="4" style="color:var(--muted);padding:16px;">No customers yet.</td></tr>`;
+        return;
+      }
+
+      customers.forEach(c=>{
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><div style="font-weight:900">${escapeHtml(c.name)}</div></td>
+          <td>${escapeHtml(c.email || "—")}</td>
+          <td>${escapeHtml(c.phone || "—")}</td>
+          <td>
+            <div class="actions">
+              <button class="iconbtn" type="button" data-edit-cust="${escapeAttr(c.id)}" title="Edit">✏️</button>
+              <button class="iconbtn" type="button" data-del-cust="${escapeAttr(c.id)}" title="Delete">🗑️</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      tbody.querySelectorAll("[data-edit-cust]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          const id = btn.getAttribute("data-edit-cust");
+          const customers = await loadCustomers();
+          const customer = customers.find(x => x.id === id);
+          if (!customer) return;
+          openCustModal(customer);
+        });
+      });
+
+      tbody.querySelectorAll("[data-del-cust]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          const id = btn.getAttribute("data-del-cust");
+          const bookings = await loadBookings();
+          if (bookings.some(b=>b.customerId === id)){
+            toast("Customer is used by bookings. Delete bookings first.");
+            return;
+          }
+
+          openConfirm({
+            title: "Delete customer?",
+            text: "This customer will be permanently deleted.",
+            onYes: async () => {
+              await apiCall("deleteCustomer", { id });
+              await refreshCache();
+              await renderCustomersTable();
+              toast("Customer deleted.");
+            }
+          });
+        });
+      });
+    }
+
+    // ===== BOOKINGS RENDERER =====
+    async function bookingsToRows({ tbodyEl, searchValue, typeFilter, onlyUpcoming, sortMode }){
+      const q = (searchValue || "").trim().toLowerCase();
+      const customers = await loadCustomers();
+      const byId = new Map(customers.map(c=>[c.id,c]));
+      let bookings = (await loadBookings()).slice();
+
+      if (onlyUpcoming) bookings = bookings.filter(b => isUpcoming(b.bookingDate));
+      if (typeFilter) bookings = bookings.filter(b => (b.bookingType || "") === typeFilter);
+
+      if (sortMode === "nearest") bookings.sort((a,b)=> new Date(a.bookingDate) - new Date(b.bookingDate));
+      else bookings.sort((a,b)=> new Date(b.bookingDate) - new Date(a.bookingDate));
+
+      bookings = bookings.filter(b=>{
+        if (!q) return true;
+        const c = byId.get(b.customerId);
+        const hay = [b.bookingType, c?.name, c?.phone, c?.email, b.status, b.paymentMethod, b.bookingDate, b.note]
+          .filter(Boolean).join(" ").toLowerCase();
+        return hay.includes(q);
+      });
+
+      const tbody = tbodyEl;
+      tbody.innerHTML = "";
+
+      if (!bookings.length){
+        tbody.innerHTML = `<tr><td colspan="7" style="color:var(--muted);padding:16px;">No bookings found.</td></tr>`;
+        return;
+      }
+
+      bookings.forEach(b=>{
+        const c = byId.get(b.customerId);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${typePill(b.bookingType)}</td>
+          <td>
+            <div style="font-weight:900;color:var(--accent)">${escapeHtml(c?.name || "Unknown")}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px;">${escapeHtml(c?.email || "")}</div>
+          </td>
+          <td style="color:var(--accent)">${escapeHtml(c?.phone || "—")}</td>
+          <td>${renderThumbs(b.images, b.id)}</td>
+          <td><span class="pill ${pillClass(b.status)}">${escapeHtml(b.status || "—")}</span></td>
+          <td>
+            <div style="font-weight:800">${escapeHtml(fmtDT(b.bookingDate))}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px;">${escapeHtml((b.currency||"EUR") + " " + Number(b.total||0).toFixed(2))}</div>
+          </td>
+          <td>
+            <div class="actions">
+              <button class="iconbtn" type="button" data-open-gallery="${escapeAttr(b.id)}" title="Images">🖼️</button>
+              <a class="iconbtn" href="#/booking/${encodeURIComponent(b.id)}" title="Edit">✏️</a>
+              <button class="iconbtn" type="button" data-del-booking="${escapeAttr(b.id)}" title="Delete">🗑️</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      tbody.querySelectorAll("[data-del-booking]").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const id = btn.getAttribute("data-del-booking");
+          openConfirm({
+            title: "Delete booking?",
+            text: "This booking will be permanently deleted (photos stay in Drive until cleanup).",
+            onYes: async () => {
+              await apiCall("deleteBooking", { id });
+              await refreshCache();
+              await route();
+              toast("Booking deleted.");
+            }
+          });
+        });
+      });
+
+      tbody.querySelectorAll("[data-open-gallery]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          const id = btn.getAttribute("data-open-gallery");
+          const bookingsAll = await loadBookings();
+          const b = bookingsAll.find(x=>x.id === id);
+          openImgModal(b?.images || []);
+        });
+      });
+
+      tbody.querySelectorAll(".thumb[data-open-gallery]").forEach(img=>{
+        img.addEventListener("click", async ()=>{
+          const id = img.getAttribute("data-open-gallery");
+          const bookingsAll = await loadBookings();
+          const b = bookingsAll.find(x=>x.id === id);
+          openImgModal(b?.images || []);
+        });
+      });
+    }
+
+    // ===== BOOKING FORM =====
+    function calcRemaining(){
+      const total = money($("#total").value);
+      const adv = money($("#advance").value);
+      $("#remaining").value = Math.max(0, total - adv).toFixed(2);
+    }
+    function setBookingSaving(isSaving){
+      const btn = $("#saveBookingBtn");
+      btn.disabled = isSaving;
+      btn.textContent = isSaving ? "Saving..." : "Save booking";
+    }
+    function parseDatetimeLocalToISO(val){
+      const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(val || "");
+      if (!m) return null;
+      const [_, y, mo, d, h, mi] = m;
+      const dt = new Date(Number(y), Number(mo)-1, Number(d), Number(h), Number(mi), 0, 0);
+      if (Number.isNaN(dt.getTime())) return null;
+      return dt.toISOString();
+    }
+
+    function resetBookingForm(){
+      $("#bookingForm").reset();
+      $("#bookingId").value = "";
+      $("#customerId").value = "";
+      $("#customerSearch").value = "";
+      $("#currency").value = "EUR";
+      $("#status").value = "Approved";
+      $("#paymentMethod").value = "Cash";
+      $("#bookingType").value = "Design";
+      $("#remaining").value = "0.00";
+      showAddCustomerBox(false);
+      clearNewCustomerFields();
+      closeCustomerSuggest();
+
+      const d = new Date();
+      d.setMinutes(d.getMinutes() + 60);
+      d.setSeconds(0,0);
+      d.setMinutes(d.getMinutes() < 30 ? 0 : 30);
+      $("#bookingDate").value = toLocalDT(d);
+
+      calcRemaining();
+      updateModePills();
+    }
+
+    function setBookingMode(mode, id=""){
+      $("#deleteBookingBtn").style.display = mode === "edit" ? "inline-flex" : "none";
+      $("#bookingFormTitle").textContent = mode === "edit" ? `Edit Booking [${id}]` : "+ New Booking";
+    }
+
+    async function loadBookingIntoForm(id){
+      const b = (await loadBookings()).find(x=>x.id === id);
+      if (!b) return false;
+
+      $("#bookingId").value = b.id;
+      setSelectedCustomerById(b.customerId);
+
+      $("#paymentMethod").value = b.paymentMethod || "Cash";
+      $("#bookingType").value = b.bookingType || "Design";
+      $("#status").value = b.status || "Approved";
+      $("#currency").value = b.currency || "EUR";
+
+      const d = new Date(b.bookingDate);
+      $("#bookingDate").value = Number.isNaN(d.getTime()) ? "" : toLocalDT(d);
+
+      $("#total").value = Number(b.total||0).toFixed(2);
+      $("#advance").value = Number(b.advance||0).toFixed(2);
+      $("#note").value = b.note || "";
+      calcRemaining();
+
+      return true;
+    }
+
+    async function saveBooking(){
+      const custId = await validateAndGetCustomerId();
+      if (!custId) return false;
+
+      const dateVal = $("#bookingDate").value;
+      if (!dateVal){ toast("Booking date is required."); return false; }
+      const iso = parseDatetimeLocalToISO(dateVal);
+      if (!iso){ toast("Invalid date format."); return false; }
+
+      const id = $("#bookingId").value || uid("b_");
+      const total = money($("#total").value);
+      const advance = money($("#advance").value);
+      const remaining = Math.max(0, total - advance);
+
+      const prev = (await loadBookings()).find(x=>x.id === id) || null;
+      let images = Array.isArray(prev?.images) ? prev.images : [];
+
+      try{
+        const uploaded = await uploadSelectedImages();
+        images = images.concat(uploaded);
+      }catch(e){
+        toast("Image upload failed: " + (e.message || e));
+      }
+
+      await apiCall("upsertBooking", {
+        id,
+        customerId: custId,
+        paymentMethod: $("#paymentMethod").value,
+        bookingType: $("#bookingType").value,
+        bookingDate: iso,
+        status: $("#status").value,
+        currency: $("#currency").value,
+        total,
+        advance,
+        remaining,
+        note: $("#note").value.trim(),
+        imagesJson: JSON.stringify(images),
+      });
+
+      await refreshCache();
+      return true;
+    }
+
+    // ===== VIEWS + ROUTER =====
+    function showView(id){
+      const ids = ["#view-upcoming","#view-bookings-hub","#view-bookings-list","#view-booking-form","#view-customers","#view-backup"];
+      ids.forEach(v => $(v).style.display = (v === id) ? "block" : "none");
+    }
+
+    async function route(){
+      if (!isAuthed()){
+        showLogin(true);
+        return;
+      }
+
+      try{
+        await ensureCache();
+        await buildCustomerIndex();
+      }catch(e){
+        toast(e.message || String(e));
+      }
+
+      const hash = location.hash || "#/upcoming";
+      const parts = hash.replace(/^#/,"").split("/").filter(Boolean);
+      $("#headerSubtitle").textContent = "Bookings & customers management";
+      updateModePills();
+
+      if (!parts.length || parts[0] === "upcoming"){
+        setActiveDrawer("/upcoming");
+        showView("#view-upcoming");
+        await bookingsToRows({
+          tbodyEl: $("#upTbody"),
+          searchValue: $("#upSearch").value,
+          typeFilter: ($("#upTypeFilter").value || "").trim(),
+          onlyUpcoming: true,
+          sortMode: "nearest",
+        });
+        return;
+      }
+
+      if (parts[0] === "bookings" && parts.length === 1){
+        setActiveDrawer("/bookings");
+        showView("#view-bookings-hub");
+        return;
+      }
+
+      if (parts[0] === "bookings" && (parts[1] === "design" || parts[1] === "tattoo")){
+        setActiveDrawer("/bookings");
+        showView("#view-bookings-list");
+        const type = parts[1] === "design" ? "Design" : "Tattoo";
+        $("#allTitle").textContent = `${type} bookings`;
+        $("#headerSubtitle").textContent = `${type} bookings (newest first)`;
+        await bookingsToRows({
+          tbodyEl: $("#allTbody"),
+          searchValue: $("#allSearch").value,
+          typeFilter: type,
+          onlyUpcoming: false,
+          sortMode: "newest",
+        });
+        return;
+      }
+
+      if (parts[0] === "booking" && parts[1] === "new"){
+        setActiveDrawer("/booking/new");
+        showView("#view-booking-form");
+        setBookingMode("new");
+        resetBookingForm();
+        return;
+      }
+
+      if (parts[0] === "booking" && parts[1]){
+        setActiveDrawer("/upcoming");
+        showView("#view-booking-form");
+        const id = decodeURIComponent(parts[1]);
+        setBookingMode("edit", id);
+        resetBookingForm();
+        if (!await loadBookingIntoForm(id)) toast("Booking not found.");
+        return;
+      }
+
+      if (parts[0] === "customers"){
+        setActiveDrawer("/customers");
+        showView("#view-customers");
+        await renderCustomersTable();
+        return;
+      }
+
+      if (parts[0] === "backup"){
+        setActiveDrawer("/backup");
+        showView("#view-backup");
+        updateModePills();
+        return;
+      }
+
+      location.hash = "#/upcoming";
+    }
+
+    // ===== BACKUP / RESTORE UI =====
+    function downloadBackup(){
+      const b = loadLocalBackup();
+      if (!b){ toast("No local backup yet."); return; }
+      const blob = new Blob([JSON.stringify(b, null, 2)], { type:"application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "inky_backup.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    async function importBackupFromFile(file){
+      const text = await file.text();
+      const obj = JSON.parse(text);
+      if (!obj || !Array.isArray(obj.customers) || !Array.isArray(obj.bookings)){
+        throw new Error("Invalid backup file.");
+      }
+      localStorage.setItem(LOCAL_BACKUP_KEY, JSON.stringify(obj));
+      CACHE.loaded = false;
+      await ensureCache();
+      toast("Backup imported to phone.");
+      updateModePills();
+    }
+
+    async function tryUploadBackupToCloud(){
+      const b = loadLocalBackup();
+      if (!b){ toast("No local backup."); return; }
+      await apiCall("import", { customers: b.customers, bookings: b.bookings });
+      await refreshCache();
+      toast("Backup uploaded to Sheet.");
+    }
+
+    // ===== LOGO =====
+    function setLogoLocal(){
+      const ids = ["#topLogo","#drawerLogo","#loginLogo"];
+      ids.forEach(sel => {
+        const el = $(sel);
+        if (!el) return;
+        el.src = LOGO_URL;
+      });
+    }
+
+    // ===== EVENTS =====
+    window.addEventListener("hashchange", () => route());
+
+    $("#hambtn").addEventListener("click", openDrawer);
+    $("#drawerClose").addEventListener("click", closeDrawer);
+    $("#drawerOverlay").addEventListener("click", closeDrawer);
+
+    document.querySelectorAll("#drawerNav .navItem").forEach(item=>{
+      item.addEventListener("click", ()=> go(item.dataset.route));
+    });
+
+    $("#topBrandLink").addEventListener("click", goUpcoming);
+    $("#drawerBrandLink").addEventListener("click", goUpcoming);
+
+    $("#upSearch").addEventListener("input", () => route());
+    $("#upTypeFilter").addEventListener("change", () => route());
+    $("#allSearch").addEventListener("input", () => route());
+
+    $("#total").addEventListener("input", ()=>{ if (isAuthed()) calcRemaining(); });
+    $("#advance").addEventListener("input", ()=>{ if (isAuthed()) calcRemaining(); });
+
+    $("#cancelBookingBtn").addEventListener("click", ()=> location.hash = "#/upcoming");
+
+    $("#bookingForm").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      if (!isAuthed()) return;
+
+      setBookingSaving(true);
+      try{
+        const ok = await saveBooking();
+        if (!ok) return;
+        toast("Booking saved.");
+        location.hash = "#/upcoming";
+      } catch (err){
+        toast("Save failed: " + (err?.message || err));
+      } finally {
+        setBookingSaving(false);
+      }
+    });
+
+    $("#deleteBookingBtn").addEventListener("click", ()=>{
+      if (!isAuthed()) return;
+      const id = $("#bookingId").value;
+      if (!id) return;
+
+      openConfirm({
+        title: "Delete booking?",
+        text: "This booking will be permanently deleted (photos remain in Drive until cleanup).",
+        onYes: async () => {
+          await apiCall("deleteBooking", { id });
+          await refreshCache();
+          toast("Booking deleted.");
+          location.hash = "#/upcoming";
+        }
+      });
+    });
+
+    // Customer autocomplete
+    $("#customerSearch").addEventListener("input", ()=>{
+      if (!isAuthed()) return;
+      const label = $("#customerSearch").value.trim();
+      const map = window.__customerLabelToId || new Map();
+      const id = map.get(label);
+
+      if (id){
+        $("#customerId").value = id;
+        showAddCustomerBox(false);
+        closeCustomerSuggest();
+        return;
+      }
+      clearSelectedCustomer();
+      updateCustomerSuggest(false);
+    });
+
+    // PATCH: focus olunca boşken de liste getir
+    $("#customerSearch").addEventListener("focus", ()=>{
+      if (!isAuthed()) return;
+      updateCustomerSuggest(true);
+    });
+
+    $("#customerSearch").addEventListener("blur", ()=>{
+      setTimeout(() => closeCustomerSuggest(), 120);
+    });
+
+    document.addEventListener("mousedown", (e)=>{
+      const box = $("#customerSuggest");
+      const input = $("#customerSearch");
+      if (!box || !input) return;
+      if (box.style.display === "none") return;
+      if (box.contains(e.target) || input.contains(e.target)) return;
+      closeCustomerSuggest();
+    });
+
+    document.addEventListener("keydown", (e)=>{
+      if (e.key === "Escape") closeCustomerSuggest();
+    });
+
+    $("#addCustomerBtn").addEventListener("click", ()=>{
+      if (!isAuthed()) return;
+      showAddCustomerBox(true);
+      clearSelectedCustomer();
+      closeCustomerSuggest();
+    });
+
+    // Customer modal
+    $("#custModalClose").addEventListener("click", closeCustModal);
+    $("#custEditCancel").addEventListener("click", closeCustModal);
+    $("#custModalOverlay").addEventListener("click", (e)=>{
+      if (e.target === $("#custModalOverlay")) closeCustModal();
+    });
+
+    $("#custEditForm").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      if (!isAuthed()) return;
+
+      const id = $("#custEditId").value;
+      const name = $("#custEditName").value.trim();
+      if (!name){ toast("Name is required."); return; }
+
+      await apiCall("upsertCustomer", {
+        id,
+        name,
+        email: $("#custEditEmail").value.trim(),
+        phone: normalizeFiPhone($("#custEditPhone").value.trim()),
+        notes: $("#custEditNotes").value.trim(),
+      });
+
+      await refreshCache();
+      await renderCustomersTable();
+      await route();
+      toast("Customer updated.");
+      closeCustModal();
+    });
+
+    // Images modal
+    $("#imgModalClose").addEventListener("click", closeImgModal);
+    $("#imgModalOverlay").addEventListener("click", (e)=>{
+      if (e.target === $("#imgModalOverlay")) closeImgModal();
+    });
+
+    // Backup / restore buttons
+    $("#downloadBackupBtn").addEventListener("click", downloadBackup);
+    $("#importBackupBtn").addEventListener("click", async ()=>{
+      const f = $("#importBackupFile").files?.[0];
+      if (!f){ toast("Select a backup file first."); return; }
+      try{
+        await importBackupFromFile(f);
+      }catch(e){
+        toast(e.message || String(e));
+      }
+    });
+    $("#forceCloudRefreshBtn").addEventListener("click", async ()=>{
+      try{
+        await refreshCache();
+        toast("Reloaded from Cloud.");
+      }catch(e){
+        toast(e.message || String(e));
+      }
+    });
+    $("#tryUploadBackupBtn").addEventListener("click", async ()=>{
+      try{
+        await tryUploadBackupToCloud();
+      }catch(e){
+        toast("Cloud import not supported: " + (e.message || e));
+      }
+    });
+
+    // Login
+    $("#loginForm").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      const pass = $("#loginPassword").value;
+      if (tryLogin(pass)){
+        $("#loginError").style.display = "none";
+        showLogin(false);
+
+        enforcePlus358($("#newCustPhone"));
+        enforcePlus358($("#custEditPhone"));
+
+        await refreshCache().catch(()=>{});
+        if (!location.hash) location.hash = "#/upcoming";
+        await route();
+      } else {
+        $("#loginError").style.display = "block";
+        $("#loginPassword").focus();
+      }
+    });
+
+    // Init
+    (async function init(){
+      setLogoLocal();
+
+      const authed = isAuthed();
+      showLogin(!authed);
+
+      enforcePlus358($("#newCustPhone"));
+      enforcePlus358($("#custEditPhone"));
+
+      $("#tryUploadBackupBtn").disabled = true;
+
+      try{
+        const ping = await apiGet("ping");
+        CLOUD_OK = !!ping?.pong;
+      }catch{
+        CLOUD_OK = false;
+      }
+      updateModePills();
+
+      if (authed){
+        await refreshCache().catch(()=>{});
+        if (!location.hash) location.hash = "#/upcoming";
+        await route();
+      } else {
+        try{ await ensureCache(); await buildCustomerIndex(); }catch{}
+      }
+    })();
+  </script>
+</body>
+</html>
